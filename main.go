@@ -67,7 +67,7 @@ func testEqSuffixSlice(suffix, tab []string) bool {
 	return true
 }
 
-func parcourt(res backup, complet bool, date time.Time) (int, error) {
+func parcourt(res backup, complet bool, date time.Time, configGlobal backupGlobal) (int, error) {
 	nbFichier := 0
 	f, err := os.OpenFile(res.fileListe, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
@@ -82,8 +82,9 @@ func parcourt(res backup, complet bool, date time.Time) (int, error) {
 	}(f)
 
 	for i := range res.rep {
-		root := res.rep[i]
-		log.Printf("Parcourt de %q\n", root)
+		root0 := res.rep[i]
+		root := convertie(root0, configGlobal)
+		log.Printf("Parcourt de %q (%v)\n", root0, root)
 		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("Erreur d'accès à %q: %v\n", path, err)
@@ -134,6 +135,17 @@ func parcourt(res backup, complet bool, date time.Time) (int, error) {
 	}
 
 	return nbFichier, nil
+}
+
+func convertie(root string, global backupGlobal) string {
+	if len(root) >= 2 && root[1] == ':' && len(global.lettreVss) > 0 {
+		lettre := root[0]
+		if link, ok := global.lettreVss[string(rune(lettre))]; ok {
+			root2 := link + root[2:]
+			return root2
+		}
+	}
+	return root
 }
 
 func addMap(s string) {
@@ -310,7 +322,7 @@ func listeFiles(backup backup, complet bool, date time.Time, global backupGlobal
 
 	start := time.Now()
 
-	nbFichiers, err := parcourt(backup, complet, date)
+	nbFichiers, err := parcourt(backup, complet, date, global)
 	if err != nil {
 		return "", 0, err
 	}
