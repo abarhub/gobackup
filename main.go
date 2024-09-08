@@ -16,6 +16,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/mxk/go-vss"
 )
 
 type backupGlobal struct {
@@ -28,6 +30,8 @@ type backupGlobal struct {
 	dateHeure           string
 	nbBackupIncremental int
 	recipient           string
+	activeVss           bool
+	lettreVss           map[string]string
 }
 
 type backup struct {
@@ -70,7 +74,12 @@ func parcourt(res backup, complet bool, date time.Time) (int, error) {
 		return 0, err
 	}
 
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(f)
 
 	for i := range res.rep {
 		root := res.rep[i]
@@ -139,7 +148,12 @@ func init4(filename string) (backupGlobal, error) {
 	if err != nil {
 		return backupGlobal{}, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(file)
 
 	mapConfig := map[string]string{}
 	scanner := bufio.NewScanner(file)
@@ -187,6 +201,10 @@ func init4(filename string) (backupGlobal, error) {
 	recipient, ok := mapConfig["global.recipient"]
 	if ok {
 		res.recipient = strings.TrimSpace(recipient)
+	}
+	activeVss, ok := mapConfig["global.activeVss"]
+	if ok {
+		res.activeVss = strings.TrimSpace(activeVss) == "true"
 	}
 
 	res.dateHeure = strings.ReplaceAll(time.Now().Format("20060102_150405.000"), ".", "")
@@ -286,7 +304,7 @@ func createTempFile(name string) (string, error) {
 	}
 }
 
-func listeFiles(backup backup, complet bool, date time.Time) (string, int, error) {
+func listeFiles(backup backup, complet bool, date time.Time, global backupGlobal) (string, int, error) {
 
 	log.Printf("ecriture de la liste des fichiers dans  %s (complet=%v) ...\n", backup.fileListe, complet)
 
@@ -326,7 +344,7 @@ func pasSleep() {
 }
 
 func main() {
-	var backupGlobal backupGlobal
+	var configGlobal backupGlobal
 	var configFile string
 	var err error
 
@@ -343,22 +361,39 @@ func main() {
 
 	go pasSleep()
 
-	backupGlobal, err = init4(configFile)
+	configGlobal, err = init4(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, backup := range backupGlobal.listeBackup {
+	if configGlobal.activeVss {
+		err = initVss(&configGlobal)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("mapVss apres init: %v", configGlobal.lettreVss)
+
+		configGlobalCopy := configGlobal
+		defer func(global backupGlobal) {
+			log.Printf("mapVss avant fermeture: %v", configGlobalCopy.lettreVss)
+			err := fermeVss(global)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(configGlobalCopy)
+	}
+
+	for _, backup := range configGlobal.listeBackup {
 
 		log.Printf("traitement de %v", backup.nom)
 
-		fileCompressed, err := compress(backup, backupGlobal)
+		fileCompressed, err := compress(backup, configGlobal)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if len(fileCompressed) > 0 {
-			err = crypt(fileCompressed, backup, backupGlobal)
+			err = crypt(fileCompressed, backup, configGlobal)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -373,6 +408,64 @@ func main() {
 
 	// Affichage de la durée écoulée
 	log.Printf("Duree totale = %v\n", duration)
+}
+
+func fermeVss(global backupGlobal) error {
+
+	log.Printf("VSS à supprimer : %v", global.lettreVss)
+
+	for lettre, link := range global.lettreVss {
+		log.Printf("Suppression de %v (%v) ...", lettre, link)
+		err := vss.Remove(link)
+		if err != nil {
+			return fmt.Errorf("erreur pour supprimer %v : %v", lettre, err)
+		}
+		log.Printf("Suppression de %v (%v) OK", lettre, link)
+	}
+	return nil
+}
+
+func initVss(configGlobal *backupGlobal) error {
+
+	var listeDisque []string
+
+	log.Printf("initialisation de VSS ...")
+
+	for _, b := range configGlobal.listeBackup {
+		for _, p := range b.rep {
+			p2 := strings.ToUpper(p)
+			if len(p) >= 2 && p[1] == ':' && rune(p2[0]) >= 'A' && rune(p2[0]) <= 'Z' {
+				if !slices.Contains(listeDisque, p2[0:1]) {
+					listeDisque = append(listeDisque, p2[0:1])
+				}
+			}
+		}
+	}
+
+	sort.Sort(sort.StringSlice(listeDisque))
+
+	now := time.Now().UnixMilli()
+
+	mapVss := make(map[string]string)
+
+	for i, lettre := range listeDisque {
+		lettreStr := lettre + ":"
+		link := "c:\\linkgo" + strings.ToLower(lettre) + "_" + strconv.FormatInt(now, 10) + "_" + strconv.FormatInt(int64(i), 10)
+		log.Printf("creation du VSS de %v", lettreStr)
+		err := vss.CreateLink(link, lettreStr)
+		if err != nil {
+			return err
+		}
+		mapVss[lettre] = link
+	}
+
+	configGlobal.lettreVss = mapVss
+
+	log.Printf("map VSS : %v", configGlobal.lettreVss)
+
+	log.Printf("initialisation de VSS ok")
+
+	return nil
 }
 
 func crypt(fileCompressed string, b backup, global backupGlobal) error {
@@ -444,7 +537,7 @@ func compress(backup backup, global backupGlobal) (string, error) {
 		return "", err
 	}
 
-	fileList, nbFichier, err := listeFiles(backup, complet, date)
+	fileList, nbFichier, err := listeFiles(backup, complet, date, global)
 	if err != nil {
 		return "", err
 	}
