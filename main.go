@@ -42,9 +42,10 @@ type backup struct {
 	fileListe string
 }
 
-var set map[string]bool
-
-var map2 map[string][]string
+type listeFichiers struct {
+	listeFiles string
+	nbFiles    int
+}
 
 // Execution States
 const (
@@ -90,18 +91,18 @@ func parcourt(res backup, complet bool, date time.Time, configGlobal backupGloba
 				fmt.Printf("Erreur d'accès à %q: %v\n", path, err)
 				return err
 			}
-			file_name := filepath.Base(path)
+			fileName := filepath.Base(path)
 
-			_, ok := res.set[file_name]
+			_, ok := res.set[fileName]
 			if ok {
 				fmt.Printf("Répertoire ignoré: %q\n", path)
 				return filepath.SkipDir
 			}
 
-			_, ok2 := res.map2[file_name]
+			_, ok2 := res.map2[fileName]
 			if ok2 {
 				tab := strings.Split(path, "\\")
-				if testEqSuffixSlice(res.map2[file_name], tab) {
+				if testEqSuffixSlice(res.map2[fileName], tab) {
 					fmt.Printf("Répertoire ignoré: %q\n", path)
 					return filepath.SkipDir
 				}
@@ -148,13 +149,13 @@ func convertie(root string, global backupGlobal) string {
 	return root
 }
 
-func addMap(s string) {
+func addMap(map2 *map[string][]string, s string) {
 	tab := strings.Split(s, "\\")
-	map2[tab[len(tab)-1]] = tab
+	(*map2)[tab[len(tab)-1]] = tab
 }
 
-func init4(filename string) (backupGlobal, error) {
-	var res backupGlobal = backupGlobal{}
+func initialisationConfig(filename string) (backupGlobal, error) {
+	var res = backupGlobal{}
 
 	file, err := os.Open(filename)
 	if err != nil {
@@ -228,7 +229,7 @@ func init4(filename string) (backupGlobal, error) {
 
 		for _, v := range liste {
 
-			var res2 backup = backup{}
+			var res2 = backup{}
 			res2.nom = v
 			debut := "backup." + v
 			key := debut + ".rep_a_sauver"
@@ -239,7 +240,7 @@ func init4(filename string) (backupGlobal, error) {
 			key = debut + ".rep_nom_a_ignorer"
 			if repNomAIgnorer, ok := mapConfig[key]; ok {
 				tab := strings.Split(repNomAIgnorer, ",")
-				set = map[string]bool{}
+				set := map[string]bool{}
 				for _, v := range tab {
 					set[v] = true
 				}
@@ -248,9 +249,9 @@ func init4(filename string) (backupGlobal, error) {
 			key = debut + ".rep_a_ignorer"
 			if repAIgnorer, ok := mapConfig[key]; ok {
 				tab := strings.Split(repAIgnorer, ",")
-				map2 = map[string][]string{}
+				map2 := map[string][]string{}
 				for _, v := range tab {
-					addMap(v)
+					addMap(&map2, v)
 				}
 				res2.map2 = map2
 			}
@@ -316,7 +317,7 @@ func createTempFile(name string) (string, error) {
 	}
 }
 
-func listeFiles(backup backup, complet bool, date time.Time, global backupGlobal) (string, int, error) {
+func listeFiles(backup backup, complet bool, date time.Time, global backupGlobal) (listeFichiers, error) {
 
 	log.Printf("ecriture de la liste des fichiers dans  %s (complet=%v) ...\n", backup.fileListe, complet)
 
@@ -324,14 +325,14 @@ func listeFiles(backup backup, complet bool, date time.Time, global backupGlobal
 
 	nbFichiers, err := parcourt(backup, complet, date, global)
 	if err != nil {
-		return "", 0, err
+		return listeFichiers{}, err
 	}
 
 	elapsed := time.Since(start)
 
 	log.Printf("parcourt %s", elapsed)
 
-	return backup.fileListe, nbFichiers, nil
+	return listeFichiers{backup.fileListe, nbFichiers}, nil
 }
 
 func pasSleep() {
@@ -373,7 +374,7 @@ func main() {
 
 	go pasSleep()
 
-	configGlobal, err = init4(configFile)
+	configGlobal, err = initialisationConfig(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -549,19 +550,19 @@ func compress(backup backup, global backupGlobal) (string, error) {
 		return "", err
 	}
 
-	fileList, nbFichier, err := listeFiles(backup, complet, date, global)
+	listeFichiers, err := listeFiles(backup, complet, date, global)
 	if err != nil {
 		return "", err
 	}
 
-	if nbFichier == 0 {
+	if listeFichiers.nbFiles == 0 {
 		log.Printf("Aucun fichier à sauvegarder")
 		return "", nil
 	} else {
-		log.Printf("%d fichiers à sauvegarder", nbFichier)
-		res, err = compression(backup, global, fileList, repCompression, complet, date)
+		log.Printf("%d fichiers à sauvegarder", listeFichiers.nbFiles)
+		res, err = compression(backup, global, listeFichiers.listeFiles, repCompression, complet, date)
 		if err != nil {
-			return "", fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.nom, fileList, err)
+			return "", fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.nom, listeFichiers.listeFiles, err)
 		} else {
 			return res, nil
 		}
@@ -703,7 +704,8 @@ func execution(program string, arguments []string) error {
 	if err != nil {
 
 		// Si une erreur survient, obtenir le code de retour
-		exitError, ok := err.(*exec.ExitError)
+		var exitError *exec.ExitError
+		ok := errors.As(err, &exitError)
 		if ok {
 			// Récupérer le code de retour du processus
 			exitCode = exitError.ExitCode()
