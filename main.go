@@ -18,9 +18,6 @@ import (
 	"time"
 )
 
-//TIP To run your code, right-click the code and select <b>Run</b>. Alternatively, click
-// the <icon src="AllIcons.Actions.Execute"/> icon in the gutter and select the <b>Run</b> menu item from here.
-
 type backupGlobal struct {
 	listeNomBackup      []string
 	rep7zip             string
@@ -412,7 +409,6 @@ func crypt(fileCompressed string, b backup, global backupGlobal) error {
 }
 
 func cryptFile(fileCompressed string, fileCrypted string, global backupGlobal) (string, error) {
-	var exitCode int
 	var program string
 	var args []string
 
@@ -420,53 +416,11 @@ func cryptFile(fileCompressed string, fileCrypted string, global backupGlobal) (
 	args = []string{"-v", "--encrypt", "--recipient=" + global.recipient, "--output=" + fileCrypted,
 		fileCompressed}
 
-	log.Printf("crypt %v -> %v", fileCompressed, fileCrypted)
-	log.Printf("prg: %v", program)
-	log.Printf("args: %v", args)
-
-	// Préparer la commande avec cmd /c start
-	cmd := exec.Command(program, append(args)...)
-
-	// Rediriger la sortie standard et la sortie d'erreur vers la console
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
 	log.Printf("cryptage de %v ...", path.Base(fileCompressed))
 
-	// Capture le temps de début
-	startTime := time.Now()
-
-	// Exécuter la commande
-	err := cmd.Start() // Démarre la commande sans bloquer
-	if err != nil {
-		return "", fmt.Errorf("Erreur lors de l'exécution de la commande: %v", err)
-	}
-
-	// Attendre la fin du programme
-	err = cmd.Wait()
-	// Capture le temps de fin
-	endTime := time.Now()
-	if err != nil {
-
-		// Si une erreur survient, obtenir le code de retour
-		exitError, ok := err.(*exec.ExitError)
-		if ok {
-			// Récupérer le code de retour du processus
-			exitCode = exitError.ExitCode()
-		} else {
-			// Autre erreur
-			return "", fmt.Errorf("Erreur lors de l'attente de la commande : %v", err)
-		}
-
-	}
-
-	// Calcul de la durée écoulée
-	duration := endTime.Sub(startTime)
+	err := execution(program, args)
 
 	log.Printf("cryptage terminé")
-
-	// Affichage de la durée écoulée
-	log.Printf("Duree = %v, Code sortie = %v\n", duration, exitCode)
 
 	if err != nil {
 		return "", err
@@ -662,6 +616,3 @@ func execution(program string, arguments []string) error {
 	log.Printf("Duree = %v, Code sortie = %v\n", duration, exitCode)
 	return err
 }
-
-//TIP See GoLand help at <a href="https://www.jetbrains.com/help/go/">jetbrains.com/help/go/</a>.
-// Also, you can try interactive lessons for GoLand by selecting 'Help | Learn IDE Features' from the main menu.
