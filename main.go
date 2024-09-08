@@ -632,6 +632,24 @@ func calculComplet(repCompression string, backup backup, global backupGlobal) (b
 	if global.nbBackupIncremental > 0 {
 		for i := len(liste) - 1; i >= 0; i-- {
 			s := liste[i]
+			if !dateDebutTrouve {
+				var s0 string
+				if strings.HasPrefix(s, debutComplet) {
+					s0 = strings.TrimPrefix(s, debutComplet)
+				} else if strings.HasPrefix(s, debutIncrement) {
+					s0 = strings.TrimPrefix(s, debutIncrement)
+				}
+				if len(s0) == 18 {
+					s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
+					tt, err0 := time.Parse("20060102_150405.000", s0)
+					if err0 != nil {
+						// erreur de parsing => on ignore le fichier
+					} else {
+						dateDebutTrouve = true
+						dateDebut = tt
+					}
+				}
+			}
 			if strings.HasPrefix(s, "backupc_") {
 				break
 			} else {
