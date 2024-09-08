@@ -80,7 +80,7 @@ func parcourt(res backup, complet bool, date time.Time, configGlobal backupGloba
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 	}(f)
 
@@ -166,7 +166,7 @@ func initialisationConfig(filename string) (backupGlobal, error) {
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 	}(file)
 
@@ -313,7 +313,7 @@ func createTempFile(name string) (string, error) {
 	defer func(f *os.File) {
 		err := f.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 	}(f)
 	if err != nil {
@@ -375,27 +375,27 @@ func main() {
 	if len(args) > 1 {
 		configFile = args[1]
 	} else {
-		log.Fatal("Le fichier de config n'est pas indiqué")
+		log.Panic("Le fichier de config n'est pas indiqué")
 	}
 
 	go pasSleep()
 
 	configGlobal, err = initialisationConfig(configFile)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	if len(configGlobal.logDir) > 0 {
 		logFile, err := os.OpenFile(configGlobal.logDir+fmt.Sprintf("/app-%s.log", time.Now().Format("20060102")), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		mw := io.MultiWriter(os.Stdout, logFile)
 		log.SetOutput(mw)
 		defer func(logFile *os.File) {
 			err := logFile.Close()
 			if err != nil {
-				log.Fatal(err)
+				log.Panic(err)
 			}
 		}(logFile)
 	}
@@ -405,7 +405,7 @@ func main() {
 	if configGlobal.activeVss {
 		err = initVss(&configGlobal)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 		log.Printf("mapVss apres init: %v", configGlobal.lettreVss)
 
@@ -414,7 +414,7 @@ func main() {
 			log.Printf("mapVss avant fermeture: %v", configGlobalCopy.lettreVss)
 			err := fermeVss(global)
 			if err != nil {
-				log.Fatal(err)
+				log.Panic(err)
 			}
 		}(configGlobalCopy)
 	}
@@ -425,13 +425,13 @@ func main() {
 
 		fileCompressed, err := compress(backup, configGlobal)
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 
 		if len(fileCompressed) > 0 {
 			err = crypt(fileCompressed, backup, configGlobal)
 			if err != nil {
-				log.Fatal(err)
+				log.Panic(err)
 			}
 		}
 	}
@@ -653,19 +653,6 @@ func calculComplet(repCompression string, backup backup, global backupGlobal) (b
 			if strings.HasPrefix(s, "backupc_") {
 				break
 			} else {
-				if !dateDebutTrouve {
-					s0 := strings.TrimPrefix(s, debutIncrement)
-					if len(s0) == 18 {
-						s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
-						tt, err0 := time.Parse("20060102_150405.000", s0)
-						if err0 != nil {
-							// erreur de parsing => on ignore le fichier
-						} else {
-							dateDebutTrouve = true
-							dateDebut = tt
-						}
-					}
-				}
 				nbBackupIncremental++
 			}
 		}
@@ -673,11 +660,16 @@ func calculComplet(repCompression string, backup backup, global backupGlobal) (b
 
 	log.Printf("date: %v (%v), nbBackupIncr: %d", dateDebut, dateDebutTrouve, nbBackupIncremental)
 
-	if !dateDebutTrouve || nbBackupIncremental > global.nbBackupIncremental {
+	if global.nbBackupIncremental == 0 || nbBackupIncremental > global.nbBackupIncremental {
 		backupComplet = true
 	} else {
 		backupComplet = false
-		t1 = time.Date(dateDebut.Year(), dateDebut.Month(), dateDebut.Day(), 0, 0, 0, 0, dateDebut.Location())
+		if dateDebutTrouve {
+			t1 = time.Date(dateDebut.Year(), dateDebut.Month(), dateDebut.Day(), 0, 0, 0, 0, dateDebut.Location())
+		} else {
+			now := time.Now()
+			t1 = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		}
 	}
 
 	log.Printf("liste %v", liste)
