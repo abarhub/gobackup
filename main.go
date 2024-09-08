@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -32,6 +33,7 @@ type backupGlobal struct {
 	recipient           string
 	activeVss           bool
 	lettreVss           map[string]string
+	logDir              string
 }
 
 type backup struct {
@@ -219,6 +221,10 @@ func initialisationConfig(filename string) (backupGlobal, error) {
 	if ok {
 		res.activeVss = strings.TrimSpace(activeVss) == "true"
 	}
+	logdir, ok := mapConfig["global.logdir"]
+	if ok {
+		res.logDir = strings.TrimSpace(logdir)
+	}
 
 	res.dateHeure = strings.ReplaceAll(time.Now().Format("20060102_150405.000"), ".", "")
 
@@ -378,6 +384,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if len(configGlobal.logDir) > 0 {
+		logFile, err := os.OpenFile(configGlobal.logDir+fmt.Sprintf("/app-%s.log", time.Now().Format("20060102")), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+		if err != nil {
+			log.Fatal(err)
+		}
+		mw := io.MultiWriter(os.Stdout, logFile)
+		log.SetOutput(mw)
+		defer func(logFile *os.File) {
+			err := logFile.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(logFile)
+	}
+
+	log.Printf("current pid: %v", os.Getpid())
 
 	if configGlobal.activeVss {
 		err = initVss(&configGlobal)
