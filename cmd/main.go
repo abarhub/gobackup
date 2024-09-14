@@ -79,7 +79,7 @@ func main() {
 			log.Panic(err)
 		}
 
-		if len(fileCompressed) > 0 {
+		if len(fileCompressed.ListeFichier) > 0 {
 			err = crypt.Crypt(fileCompressed, backup, configGlobal)
 			if err != nil {
 				log.Panic(err)

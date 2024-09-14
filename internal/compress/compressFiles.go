@@ -5,8 +5,11 @@ import (
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
 	"gobackup/internal/listFiles"
+	"io/fs"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -14,36 +17,38 @@ import (
 	"time"
 )
 
-func Compress(backup config.Backup, global config.BackupGlobal) (string, error) {
+type ResultatCompress struct {
+	ListeFichier []string
+}
 
-	var res string
+func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompress, error) {
 
 	repCompression := fmt.Sprintf("%v/%v", global.RepCompression, backup.Nom)
 	err := os.MkdirAll(repCompression, os.ModePerm)
 	if err != nil {
-		return "", err
+		return ResultatCompress{}, err
 	}
 
 	complet, date, err := calculComplet(repCompression, backup, global)
 	if err != nil {
-		return "", err
+		return ResultatCompress{}, err
 	}
 
 	listeFichiers, err := listFiles.ListeFiles(backup, complet, date, global)
 	if err != nil {
-		return "", err
+		return ResultatCompress{}, err
 	}
 
 	if listeFichiers.NbFiles == 0 {
 		log.Printf("Aucun fichier à sauvegarder")
-		return "", nil
+		return ResultatCompress{}, nil
 	} else {
 		log.Printf("%d fichiers à sauvegarder", listeFichiers.NbFiles)
-		res, err = compression(backup, global, listeFichiers.ListeFiles, repCompression, complet, date)
+		listeFichierCompresse, err := compression(backup, global, listeFichiers.ListeFiles, repCompression, complet)
 		if err != nil {
-			return "", fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.Nom, listeFichiers.ListeFiles, err)
+			return ResultatCompress{}, fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.Nom, listeFichiers.ListeFiles, err)
 		} else {
-			return res, nil
+			return ResultatCompress{listeFichierCompresse}, nil
 		}
 	}
 }
@@ -134,7 +139,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	return backupComplet, t1, nil
 }
 
-func compression(backup config.Backup, global config.BackupGlobal, fileList string, repCompression string, complet bool, date time.Time) (string, error) {
+func compression(backup config.Backup, global config.BackupGlobal, fileList string, repCompression string, complet bool) ([]string, error) {
 	var program string
 	var args []string
 	var res string
@@ -158,9 +163,25 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 
 	log.Printf("compression terminé")
 
+	name := path.Base(res)
+
+	var listeFichiers []string
+
+	filepath.WalkDir(repCompression, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && strings.HasPrefix(d.Name(), name) {
+			listeFichiers = append(listeFichiers, path)
+		}
+		return nil
+	})
+
+	log.Printf("liste dir: %v", listeFichiers)
+
 	if err != nil {
-		return "", err
+		return []string{}, err
 	} else {
-		return res, nil
+		return listeFichiers, nil
 	}
 }

@@ -3,40 +3,38 @@ package crypt
 import (
 	"errors"
 	"fmt"
+	"gobackup/internal/compress"
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
-func Crypt(fileCompressed string, b config.Backup, global config.BackupGlobal) error {
+func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global config.BackupGlobal) error {
 
-	rep := path.Dir(fileCompressed)
-	filename := path.Base(fileCompressed)
 	repCrypt := fmt.Sprintf("%v/%v", global.RepCryptage, b.Nom)
 	err := os.MkdirAll(repCrypt, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	files, err := os.ReadDir(rep)
-	if err != nil {
-		return err
-	}
-
-	for _, file := range files {
-		if strings.HasPrefix(file.Name(), filename) && !strings.HasSuffix(file.Name(), ".gpg") {
-			f := rep + "\\" + file.Name()
-			f2 := repCrypt + "/" + file.Name() + ".gpg"
+	for _, file := range fileCompressed.ListeFichier {
+		filename := filepath.Base(file)
+		if !strings.HasSuffix(filename, ".gpg") {
+			f := file
+			f2 := repCrypt + "/" + filename + ".gpg"
 			if _, err := os.Stat(f2); errors.Is(err, os.ErrNotExist) {
 				_, err := cryptFile(f, f2, global)
 				if err != nil {
 					return err
 				}
+			} else if err != nil {
+				log.Printf("Erreur pour tester l'existance du fichier %s : %v", f2, err.Error())
 			} else {
-				log.Printf("File %s is already crypted\n", file.Name())
+				log.Printf("Fichier %s déjà crypté (%s)\n", file, f2)
 			}
 		}
 	}
