@@ -5,6 +5,7 @@ import (
 	"gobackup/internal/compress"
 	"gobackup/internal/config"
 	"gobackup/internal/crypt"
+	"gobackup/internal/hashFiles"
 	"gobackup/internal/noSleep"
 	"gobackup/internal/vss"
 	"io"
@@ -84,6 +85,11 @@ func main() {
 			if err != nil {
 				log.Panic(err)
 			}
+		}
+
+		err = hashFiles.VerifieHash(backup.Nom, configGlobal)
+		if err != nil {
+			log.Panic(err)
 		}
 	}
 
