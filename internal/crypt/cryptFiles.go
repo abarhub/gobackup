@@ -6,6 +6,7 @@ import (
 	"gobackup/internal/compress"
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
+	"gobackup/internal/hashFiles"
 	"log"
 	"os"
 	"path"
@@ -23,11 +24,17 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 
 	for _, file := range fileCompressed.ListeFichier {
 		filename := filepath.Base(file)
-		if !strings.HasSuffix(filename, ".gpg") {
+		if !strings.HasSuffix(filename, ".gpg") && !strings.HasSuffix(filename, ".sha256sum") {
 			f := file
 			f2 := repCrypt + "/" + filename + ".gpg"
 			if _, err := os.Stat(f2); errors.Is(err, os.ErrNotExist) {
+				// cryptate du fichier f2
 				_, err := cryptFile(f, f2, global)
+				if err != nil {
+					return err
+				}
+				// calcul du hash du fichier f2
+				err = hashFiles.ConstruitHash(f2)
 				if err != nil {
 					return err
 				}

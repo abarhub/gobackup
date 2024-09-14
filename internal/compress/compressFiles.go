@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
+	"gobackup/internal/hashFiles"
 	"gobackup/internal/listFiles"
 	"io/fs"
 	"log"
@@ -26,7 +27,7 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 	repCompression := fmt.Sprintf("%v/%v", global.RepCompression, backup.Nom)
 	err := os.MkdirAll(repCompression, os.ModePerm)
 	if err != nil {
-		return ResultatCompress{}, err
+		return ResultatCompress{}, fmt.Errorf("erreur pour créer le répertoire %s : %v", repCompression, err)
 	}
 
 	complet, date, err := calculComplet(repCompression, backup, global)
@@ -48,6 +49,12 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 		if err != nil {
 			return ResultatCompress{}, fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.Nom, listeFichiers.ListeFiles, err)
 		} else {
+			for _, f := range listeFichierCompresse {
+				err = hashFiles.ConstruitHash(f)
+				if err != nil {
+					return ResultatCompress{}, err
+				}
+			}
 			return ResultatCompress{listeFichierCompresse}, nil
 		}
 	}
