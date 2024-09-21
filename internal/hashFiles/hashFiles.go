@@ -135,3 +135,7 @@ func verifieFichiers(repertoire string) error {
 		return nil
 	}
 }
+
+func GetExtension() string {
+	return extension
+}

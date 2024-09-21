@@ -1,6 +1,7 @@
 package compress
 
 import (
+	"errors"
 	"fmt"
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
@@ -55,9 +56,37 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 					return ResultatCompress{}, err
 				}
 			}
+			err := calculHashFichiers(repCompression)
+			if err != nil {
+				return ResultatCompress{}, err
+			}
 			return ResultatCompress{listeFichierCompresse}, nil
 		}
 	}
+}
+
+func calculHashFichiers(repCompression string) error {
+	files, err := os.ReadDir(repCompression)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		filename := filepath.Base(file.Name())
+		if !strings.HasSuffix(filename, hashFiles.GetExtension()) {
+			f := repCompression + "/" + file.Name()
+			fileHash := f + hashFiles.GetExtension()
+			if _, err := os.Stat(fileHash); errors.Is(err, os.ErrNotExist) {
+				// calcul du hash du fichier
+				log.Printf("Calcul du hash du fichier %s", f)
+				err = hashFiles.ConstruitHash(f)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
