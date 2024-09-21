@@ -167,6 +167,9 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 	log.Printf("compression ...")
 
 	err := execution.Execution(program, args)
+	if err != nil {
+		return []string{}, err
+	}
 
 	log.Printf("compression terminé")
 
@@ -174,7 +177,7 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 
 	var listeFichiers []string
 
-	filepath.WalkDir(repCompression, func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(repCompression, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -183,6 +186,9 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 		}
 		return nil
 	})
+	if err != nil {
+		return []string{}, err
+	}
 
 	log.Printf("liste dir: %v", listeFichiers)
 
