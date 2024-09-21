@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+const extension = ".gpg"
+
 func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global config.BackupGlobal) error {
 
 	repCrypt := fmt.Sprintf("%v/%v", global.RepCryptage, b.Nom)
@@ -29,9 +31,9 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 
 	for _, file := range fileCompressed.ListeFichier {
 		filename := filepath.Base(file)
-		if !strings.HasSuffix(filename, ".gpg") && !strings.HasSuffix(filename, ".sha256sum") {
+		if !strings.HasSuffix(filename, extension) && !strings.HasSuffix(filename, hashFiles.GetExtension()) {
 			f := file
-			f2 := repCrypt + "/" + filename + ".gpg"
+			f2 := repCrypt + "/" + filename + extension
 			if _, err := os.Stat(f2); errors.Is(err, os.ErrNotExist) {
 				// cryptate du fichier f2
 				_, err := cryptFile(f, f2, global)
@@ -47,6 +49,71 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 				log.Printf("Erreur pour tester l'existance du fichier %s : %v", f2, err.Error())
 			} else {
 				log.Printf("Fichier %s déjà crypté (%s)\n", file, f2)
+			}
+		}
+	}
+
+	err = cryptFichiersNonCryptes(global, repCrypt, b)
+	if err != nil {
+		return err
+	}
+
+	err = hashFichiersNonHashes(repCrypt)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hashFichiersNonHashes(cryptRepertoire string) error {
+	files, err := os.ReadDir(cryptRepertoire)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		filename := filepath.Base(file.Name())
+		if !strings.HasSuffix(filename, hashFiles.GetExtension()) && strings.Contains(filename, extension) {
+			fichierCrypte := cryptRepertoire + "/" + filename
+			fichierHash := fichierCrypte + hashFiles.GetExtension()
+			if _, err := os.Stat(fichierHash); errors.Is(err, os.ErrNotExist) {
+				log.Printf("Calcul du hash de %s", fichierCrypte)
+				// calcul du hash du fichier fichierCrypte
+				err = hashFiles.ConstruitHash(fichierCrypte)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func cryptFichiersNonCryptes(global config.BackupGlobal, cryptRepertoire string, b config.Backup) error {
+	repCompression := global.RepCompression + "/" + b.Nom
+	files, err := os.ReadDir(repCompression)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		filename := filepath.Base(file.Name())
+		if !strings.HasSuffix(filename, hashFiles.GetExtension()) && strings.Contains(filename, ".7z") {
+			fichierCompresse := repCompression + "/" + file.Name()
+			fichierCrypte := cryptRepertoire + "/" + filename + extension
+			if _, err := os.Stat(fichierCrypte); errors.Is(err, os.ErrNotExist) {
+				log.Printf("fichier %s a crypter", fichierCompresse)
+				_, err := cryptFile(fichierCompresse, fichierCrypte, global)
+				if err != nil {
+					return err
+				}
+				// calcul du hash du fichier fichierCrypte
+				err = hashFiles.ConstruitHash(fichierCrypte)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
