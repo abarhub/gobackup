@@ -22,6 +22,11 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 		return err
 	}
 
+	err = initialisationCryptage(global)
+	if err != nil {
+		return err
+	}
+
 	for _, file := range fileCompressed.ListeFichier {
 		filename := filepath.Base(file)
 		if !strings.HasSuffix(filename, ".gpg") && !strings.HasSuffix(filename, ".sha256sum") {
@@ -44,6 +49,23 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 				log.Printf("Fichier %s déjà crypté (%s)\n", file, f2)
 			}
 		}
+	}
+
+	return nil
+}
+
+func initialisationCryptage(global config.BackupGlobal) error {
+	program := filepath.Dir(global.RepGpg) + "/gpg-connect-agent"
+	args := []string{"-v"}
+
+	log.Printf("initialisation agent gpg ...")
+
+	err := execution.Execution(program, args)
+
+	log.Printf("initialisation agent gpg terminé")
+
+	if err != nil {
+		return err
 	}
 
 	return nil
