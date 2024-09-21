@@ -94,7 +94,7 @@ func verifieFichiers(repertoire string) error {
 
 	log.Printf("vérification du hash %s\n", filepath.Base(repertoire))
 
-	filepath.WalkDir(repertoire, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(repertoire, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -127,6 +127,9 @@ func verifieFichiers(repertoire string) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	if nbErreurs > 0 {
 		return fmt.Errorf("verifieFichiers found %d erreurs", nbErreurs)

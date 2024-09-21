@@ -215,9 +215,6 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 		}
 		return nil
 	})
-	if err != nil {
-		return []string{}, err
-	}
 
 	log.Printf("liste dir: %v", listeFichiers)
 
