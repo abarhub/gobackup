@@ -105,6 +105,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 			if strings.HasSuffix(s, ".gpg") {
 				s = strings.TrimSuffix(s, ".gpg")
 			}
+			if strings.HasSuffix(s, hashFiles.GetExtension()) {
+				s = strings.TrimSuffix(s, hashFiles.GetExtension())
+			}
 			var re = regexp.MustCompile(`\.[0-9]+$`)
 			s = re.ReplaceAllString(s, ``)
 			if strings.HasSuffix(s, ".7z") {
