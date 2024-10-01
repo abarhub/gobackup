@@ -106,24 +106,33 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	debutComplet := fmt.Sprintf("backupc_%v_", backup.Nom)
 	debutIncrement := fmt.Sprintf("backupi_%v_", backup.Nom)
 
+	log.Printf("Parcourt ...")
 	for _, file := range files {
+		log.Printf("file: %v", file.Name())
 		if !file.IsDir() && (strings.HasPrefix(file.Name(), debutComplet) || strings.HasPrefix(file.Name(), debutIncrement)) {
 			s := file.Name()
+			log.Printf("s001: %v", s)
 			if strings.HasSuffix(s, ".gpg") {
 				s = strings.TrimSuffix(s, ".gpg")
 			}
+			log.Printf("s002: %v", s)
 			if strings.HasSuffix(s, hashFiles.GetExtension()) {
 				s = strings.TrimSuffix(s, hashFiles.GetExtension())
 			}
+			log.Printf("s003: %v", s)
 			var re = regexp.MustCompile(`\.[0-9]+$`)
 			s = re.ReplaceAllString(s, ``)
+			log.Printf("s004: %v", s)
 			if strings.HasSuffix(s, ".7z") {
 				s = strings.TrimSuffix(s, ".7z")
 			}
+			log.Printf("s: %v", s)
 			re2 := regexp.MustCompile("^(" + debutComplet + ")|(" + debutIncrement + `)[0-9]+_[0-9]+$`)
 			if re2.MatchString(s) {
+				log.Printf("match: %v", s)
 				//s = trimStringFromString(s, "_")
 				if !slices.Contains(liste, s) {
+					log.Printf("append: %v", s)
 					liste = append(liste, s)
 				}
 			}
