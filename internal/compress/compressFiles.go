@@ -89,6 +89,13 @@ func calculHashFichiers(repCompression string) error {
 	return nil
 }
 
+func trimStringFromString(s string, s2 string) string {
+	if idx := strings.LastIndex(s, s2); idx != -1 {
+		return s[:idx]
+	}
+	return s
+}
+
 func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
 	files, err := os.ReadDir(repCompression)
 	if err != nil {
@@ -115,6 +122,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 			}
 			re2 := regexp.MustCompile("^(" + debutComplet + ")|(" + debutIncrement + `)[0-9]+_[0-9]+$`)
 			if re2.MatchString(s) {
+				//s = trimStringFromString(s, "_")
 				if !slices.Contains(liste, s) {
 					liste = append(liste, s)
 				}
@@ -124,6 +132,8 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 
 	sort.Sort(sort.StringSlice(liste))
 
+	log.Printf("liste sorted : %v", liste)
+
 	nbBackupIncremental := 0
 	var dateDebut time.Time
 	var dateDebutTrouve = false
@@ -132,6 +142,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	if global.NbBackupIncremental > 0 {
 		for i := len(liste) - 1; i >= 0; i-- {
 			s := liste[i]
+			log.Printf("boucle %d : %s", i, s)
 			if !dateDebutTrouve {
 				var s0 string
 				if strings.HasPrefix(s, debutComplet) {
@@ -141,6 +152,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 				}
 				if len(s0) == 18 {
 					s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
+					log.Printf("s0 : %s", s0)
 					tt, err0 := time.Parse("20060102_150405.000", s0)
 					if err0 != nil {
 						// erreur de parsing => on ignore le fichier
@@ -150,15 +162,18 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 					}
 				}
 			}
+			log.Printf("dateDebutTrouve : %v, dateDebut : %v", dateDebutTrouve, dateDebut)
 			if strings.HasPrefix(s, "backupc_") {
 				break
 			} else {
 				nbBackupIncremental++
 			}
+			log.Printf("nbBackupIncremental : %s", nbBackupIncremental)
 		}
 	}
 
-	log.Printf("date: %v (%v), nbBackupIncr: %d", dateDebut, dateDebutTrouve, nbBackupIncremental)
+	log.Printf("date: %v (%v), nbBackupIncr: %d, conf nbBackupIncr: %d",
+		dateDebut, dateDebutTrouve, nbBackupIncremental, global.NbBackupIncremental)
 
 	if global.NbBackupIncremental == 0 || nbBackupIncremental > global.NbBackupIncremental {
 		backupComplet = true
