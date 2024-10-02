@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 )
@@ -139,7 +138,43 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 		}
 	}
 
-	sort.Sort(sort.StringSlice(liste))
+	log.Printf("trie de la liste %v ...", liste)
+	slices.SortFunc(liste,
+		func(a, b string) int {
+			var t01, t02 time.Time
+			a1 := strings.TrimPrefix(a, debutComplet)
+			a1 = strings.TrimPrefix(a1, debutIncrement)
+			b1 := strings.TrimPrefix(b, debutComplet)
+			b1 = strings.TrimPrefix(b1, debutIncrement)
+			s0 := a1[0:len(a1)-3] + "." + a1[len(a1)-3:]
+			tt, err0 := time.Parse("20060102_150405.000", s0)
+			if err0 != nil {
+				// erreur de parsing => on ignore le fichier
+				log.Printf("a=%s, a1=%s, s0=%s", a, a1, s0)
+				panic(err0)
+			} else {
+				t01 = tt
+			}
+			s0 = b1[0:len(b1)-3] + "." + a1[len(b1)-3:]
+			tt, err0 = time.Parse("20060102_150405.000", s0)
+			if err0 != nil {
+				// erreur de parsing => on ignore le fichier
+				log.Printf("b=%s, b1=%s, s0=%s", b, b1, s0)
+				panic(err0)
+			} else {
+				t02 = tt
+			}
+			//return cmp.Compare(t01, t02)
+			if t01 == t02 {
+				return 0
+			} else if t01.Before(t02) {
+				return -1
+			} else {
+				return 1
+			}
+		})
+
+	//sort.Sort(sort.StringSlice(liste))
 
 	log.Printf("liste sorted : %v", liste)
 
@@ -200,6 +235,10 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	log.Printf("backup complet: %v date: %v", backupComplet, t1)
 
 	return backupComplet, t1, nil
+}
+
+func trimPrefix(s string, prefix string) string {
+	return strings.TrimPrefix(s, prefix)
 }
 
 func compression(backup config.Backup, global config.BackupGlobal, fileList string, repCompression string, complet bool) ([]string, error) {
