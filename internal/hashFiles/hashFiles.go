@@ -96,19 +96,20 @@ func verifieFichiers(repertoire string) error {
 
 	err := filepath.WalkDir(repertoire, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return err
+			return fmt.Errorf("erreur pour parcourit les repertoire pour le fichier %s : %w", repertoire+"/"+d.Name(), err)
 		}
 		if !d.IsDir() && !strings.HasSuffix(d.Name(), extensionHash) {
 			fileHash := repertoire + "/" + d.Name() + extensionHash
 			if _, err := os.Stat(fileHash); err == nil {
 				nbFichiers++
-				hashHexa, err := calculHash(repertoire+"/"+d.Name(), hashAlgo)
+				file := repertoire + "/" + d.Name()
+				hashHexa, err := calculHash(file, hashAlgo)
 				if err != nil {
-					return err
+					return fmt.Errorf("erreur pour calculer le hash du fichier %s : %w", file, err)
 				}
 				fileHashHandler, err := os.ReadFile(fileHash)
 				if err != nil {
-					return err
+					return fmt.Errorf("erreur pour lire le fichier %s : %w", fileHash, err)
 				}
 				fileHashHandlerStr := string(fileHashHandler)
 				if hashHexa == fileHashHandlerStr {

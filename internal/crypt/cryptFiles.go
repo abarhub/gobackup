@@ -21,12 +21,12 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 	repCrypt := fmt.Sprintf("%v/%v", global.RepCryptage, b.Nom)
 	err := os.MkdirAll(repCrypt, os.ModePerm)
 	if err != nil {
-		return err
+		return fmt.Errorf("erreur pour creer le répertoire %s : %w", repCrypt, err)
 	}
 
 	err = initialisationCryptage(global)
 	if err != nil {
-		return err
+		return fmt.Errorf("erreur pour initialiser le cryptage : %w", err)
 	}
 
 	for _, file := range fileCompressed.ListeFichier {
@@ -38,12 +38,12 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 				// cryptate du fichier f2
 				_, err := cryptFile(f, f2, global)
 				if err != nil {
-					return err
+					return fmt.Errorf("erreur pour crypter le fichier %s : %w", f, err)
 				}
 				// calcul du hash du fichier f2
 				err = hashFiles.ConstruitHash(f2)
 				if err != nil {
-					return err
+					return fmt.Errorf("erreur pour calculer le hash du fichier %s : %w", f2, err)
 				}
 			} else if err != nil {
 				log.Printf("Erreur pour tester l'existance du fichier %s : %v", f2, err.Error())
@@ -55,12 +55,12 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 
 	err = cryptFichiersNonCryptes(global, repCrypt, b)
 	if err != nil {
-		return err
+		return fmt.Errorf("erreur pour crypter les fichiers non crypte : %w", err)
 	}
 
 	err = hashFichiersNonHashes(repCrypt)
 	if err != nil {
-		return err
+		return fmt.Errorf("erreur pour calculer le hash des fichiers non hashés : %w", err)
 	}
 
 	return nil

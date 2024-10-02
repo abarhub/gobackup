@@ -38,16 +38,17 @@ func main() {
 	}
 
 	if len(configGlobal.LogDir) > 0 {
-		logFile, err := os.OpenFile(configGlobal.LogDir+fmt.Sprintf("/app-%s.log", time.Now().Format("20060102")), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+		file := configGlobal.LogDir + fmt.Sprintf("/app-%s.log", time.Now().Format("20060102"))
+		logFile, err := os.OpenFile(file, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 		if err != nil {
-			log.Panic(err)
+			log.Panic(fmt.Errorf("erreur pour ouvrir le fichier %s : %w", file, err))
 		}
 		mw := io.MultiWriter(os.Stdout, logFile)
 		log.SetOutput(mw)
 		defer func(logFile *os.File) {
 			err := logFile.Close()
 			if err != nil {
-				log.Panic(err)
+				log.Panic(fmt.Errorf("erreur pour fermer le fichier %s : %w", file, err))
 			}
 		}(logFile)
 	}
@@ -57,7 +58,7 @@ func main() {
 	if configGlobal.ActiveVss {
 		err = vss.InitVss(&configGlobal)
 		if err != nil {
-			log.Panic(err)
+			log.Panic(fmt.Errorf("erreur pour initialiser VSS : %w", err))
 		}
 		log.Printf("mapVss apres init: %v", configGlobal.LettreVss)
 
@@ -66,31 +67,15 @@ func main() {
 			log.Printf("mapVss avant fermeture: %v", configGlobalCopy.LettreVss)
 			err := vss.FermeVss(global)
 			if err != nil {
-				log.Panic(err)
+				log.Panic(fmt.Errorf("erreur pour fermer VSS: %w", err))
 			}
 		}(configGlobalCopy)
 	}
 
-	for _, backup := range configGlobal.ListeBackup {
-
-		log.Printf("traitement de %v", backup.Nom)
-
-		fileCompressed, err := compress.Compress(backup, configGlobal)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		if len(fileCompressed.ListeFichier) > 0 {
-			err = crypt.Crypt(fileCompressed, backup, configGlobal)
-			if err != nil {
-				log.Panic(err)
-			}
-		}
-
-		err = hashFiles.VerifieHash(backup.Nom, configGlobal)
-		if err != nil {
-			log.Panic(err)
-		}
+	// backup
+	err = backup(configGlobal)
+	if err != nil {
+		log.Panic(fmt.Errorf("erreur pour le backup : %w", err))
 	}
 
 	// Capture le temps de fin
@@ -101,4 +86,30 @@ func main() {
 
 	// Affichage de la durée écoulée
 	log.Printf("Duree totale = %v\n", duration)
+}
+
+func backup(configGlobal config.BackupGlobal) error {
+	for _, backup := range configGlobal.ListeBackup {
+
+		log.Printf("traitement de %v", backup.Nom)
+
+		fileCompressed, err := compress.Compress(backup, configGlobal)
+		if err != nil {
+			return fmt.Errorf("erreur pour compresser les fichiers : %w", err)
+		}
+
+		if len(fileCompressed.ListeFichier) > 0 {
+			err = crypt.Crypt(fileCompressed, backup, configGlobal)
+			if err != nil {
+				return fmt.Errorf("erreur pour crypter les fichiers : %w", err)
+			}
+		}
+
+		err = hashFiles.VerifieHash(backup.Nom, configGlobal)
+		if err != nil {
+			return fmt.Errorf("erreur pour vérifier les hash : %w", err)
+		}
+	}
+
+	return nil
 }
