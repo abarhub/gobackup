@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gobackup/internal/archivage"
 	"gobackup/internal/compress"
 	"gobackup/internal/config"
 	"gobackup/internal/crypt"
@@ -108,6 +109,11 @@ func backup(configGlobal config.BackupGlobal) error {
 		err = hashFiles.VerifieHash(backup.Nom, configGlobal)
 		if err != nil {
 			return fmt.Errorf("erreur pour vérifier les hash : %w", err)
+		}
+
+		err = archivage.Archivage(configGlobal)
+		if err != nil {
+			return fmt.Errorf("erreur pour archiver les fichiers : %w", err)
 		}
 	}
 

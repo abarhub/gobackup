@@ -19,21 +19,24 @@ const (
 )
 
 type BackupGlobal struct {
-	listeNomBackup      []string
-	Rep7zip             string
-	RepGpg              string
-	RepCompression      string
-	RepCryptage         string
-	ListeBackup         []Backup
-	DateHeure           string
-	NbBackupIncremental int
-	Recipient           string
-	ActiveVss           bool
-	LettreVss           map[string]string
-	LogDir              string
-	TypeCryptage        TypeCrypt
-	RepAge              string
-	AgeRecipien         string
+	listeNomBackup       []string
+	Rep7zip              string
+	RepGpg               string
+	RepCompression       string
+	RepCryptage          string
+	ListeBackup          []Backup
+	DateHeure            string
+	NbBackupIncremental  int
+	Recipient            string
+	ActiveVss            bool
+	LettreVss            map[string]string
+	LogDir               string
+	TypeCryptage         TypeCrypt
+	RepAge               string
+	AgeRecipien          string
+	RepArchivageCompress string
+	RepArchivageCryptage string
+	NbJourArchivage      int
 }
 
 type Backup struct {
@@ -130,6 +133,26 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 	ageRecipien, ok := mapConfig["global.age_recipien"]
 	if ok {
 		res.AgeRecipien = strings.TrimSpace(ageRecipien)
+	}
+
+	repArchivageCompress, ok := mapConfig["global.rep_archivage_compression"]
+	if ok {
+		res.RepArchivageCompress = strings.TrimSpace(repArchivageCompress)
+	}
+	RepArchivageCryptage, ok := mapConfig["global.rep_archivage_cryptage"]
+	if ok {
+		res.RepArchivageCryptage = strings.TrimSpace(RepArchivageCryptage)
+	}
+	nbJourArchive, ok := mapConfig["global.nb_jour_archive"]
+	if ok {
+		if len(nbJourArchive) > 0 {
+			res.NbJourArchivage, err = strconv.Atoi(nbJourArchive)
+			if err != nil {
+				return BackupGlobal{}, fmt.Errorf("le paramètre global.nb_jour_archive n'est pas un nombre", err)
+			}
+		} else {
+			res.NbBackupIncremental = 0
+		}
 	}
 
 	res.DateHeure = strings.ReplaceAll(time.Now().Format("20060102_150405.000"), ".", "")
