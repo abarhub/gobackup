@@ -100,7 +100,7 @@ func verifieFichiers(repertoire string) error {
 			if d != nil {
 				rep = repertoire + "/" + d.Name()
 			}
-			return fmt.Errorf("erreur pour parcourit les repertoire pour le fichier %s : %w", rep, err)
+			return fmt.Errorf("erreur pour parcourit les fiuchiers pour le répertoire %s (%s,%s) : %w", rep, repertoire, path, err)
 
 		}
 		if !d.IsDir() && !strings.HasSuffix(d.Name(), extensionHash) {
