@@ -111,8 +111,10 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 		if !file.IsDir() && (strings.HasPrefix(file.Name(), debutComplet) || strings.HasPrefix(file.Name(), debutIncrement)) {
 			s := file.Name()
 			log.Printf("s001: %v", s)
-			if strings.HasSuffix(s, ".gpg") {
-				s = strings.TrimSuffix(s, ".gpg")
+			for _, extCrypt := range []string{".gpg", ".age"} {
+				if strings.HasSuffix(s, extCrypt) {
+					s = strings.TrimSuffix(s, extCrypt)
+				}
 			}
 			log.Printf("s002: %v", s)
 			if strings.HasSuffix(s, hashFiles.GetExtension()) {

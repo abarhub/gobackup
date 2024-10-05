@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+type TypeCrypt int
+
+const (
+	CryptGpg TypeCrypt = 1 << iota
+	CryptAge           = 1 << iota
+)
+
 type BackupGlobal struct {
 	listeNomBackup      []string
 	Rep7zip             string
@@ -24,6 +31,9 @@ type BackupGlobal struct {
 	ActiveVss           bool
 	LettreVss           map[string]string
 	LogDir              string
+	TypeCryptage        TypeCrypt
+	RepAge              string
+	AgeRecipien         string
 }
 
 type Backup struct {
@@ -103,6 +113,24 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 	if ok {
 		res.LogDir = strings.TrimSpace(logdir)
 	}
+	typeCryptage, ok := mapConfig["global.type_cryptage"]
+	if ok {
+		if typeCryptage == "gpg" {
+			res.TypeCryptage = CryptGpg
+		} else if typeCryptage == "age" {
+			res.TypeCryptage = CryptAge
+		} else {
+			return BackupGlobal{}, errors.New("le paramètre typeCryptage n'est pas valide (valeurs possibles: gpg, age)")
+		}
+	}
+	repAge, ok := mapConfig["global.rep_age"]
+	if ok {
+		res.RepAge = strings.TrimSpace(repAge)
+	}
+	ageRecipien, ok := mapConfig["global.age_recipien"]
+	if ok {
+		res.AgeRecipien = strings.TrimSpace(ageRecipien)
+	}
 
 	res.DateHeure = strings.ReplaceAll(time.Now().Format("20060102_150405.000"), ".", "")
 
@@ -163,10 +191,6 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 		return BackupGlobal{}, errors.New("no 7zip directory")
 	}
 
-	if len(res.RepGpg) == 0 {
-		return BackupGlobal{}, errors.New("no gpg directory")
-	}
-
 	if len(res.RepCompression) == 0 {
 		return BackupGlobal{}, errors.New("no compress directory")
 	}
@@ -179,8 +203,24 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 		return BackupGlobal{}, errors.New("nbBackupIncremental doit être superieur ou égal à 0")
 	}
 
-	if len(res.Recipient) == 0 {
-		return BackupGlobal{}, errors.New("le paramètre recipient est vide")
+	if res.TypeCryptage == CryptGpg {
+		if len(res.RepGpg) == 0 {
+			return BackupGlobal{}, errors.New("no gpg directory")
+		}
+
+		if len(res.Recipient) == 0 {
+			return BackupGlobal{}, errors.New("le paramètre recipient est vide")
+		}
+
+	} else {
+		if len(res.RepAge) == 0 {
+			return BackupGlobal{}, errors.New("no age directory")
+		}
+
+		if len(res.AgeRecipien) == 0 {
+			return BackupGlobal{}, errors.New("le paramètre ageRecipient est vide")
+		}
+
 	}
 
 	return res, nil
