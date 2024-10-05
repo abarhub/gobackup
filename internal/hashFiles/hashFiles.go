@@ -96,7 +96,12 @@ func verifieFichiers(repertoire string) error {
 
 	err := filepath.WalkDir(repertoire, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("erreur pour parcourit les repertoire pour le fichier %s : %w", repertoire+"/"+d.Name(), err)
+			rep := repertoire
+			if d != nil {
+				rep = repertoire + "/" + d.Name()
+			}
+			return fmt.Errorf("erreur pour parcourit les repertoire pour le fichier %s : %w", rep, err)
+
 		}
 		if !d.IsDir() && !strings.HasSuffix(d.Name(), extensionHash) {
 			fileHash := repertoire + "/" + d.Name() + extensionHash
