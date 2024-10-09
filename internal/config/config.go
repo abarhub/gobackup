@@ -37,6 +37,8 @@ type BackupGlobal struct {
 	RepArchivageCompress string
 	RepArchivageCryptage string
 	NbJourArchivage      int
+	DebugCompression     bool
+	DebugArchivage       bool
 }
 
 type Backup struct {
@@ -142,6 +144,14 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 	RepArchivageCryptage, ok := mapConfig["global.rep_archivage_cryptage"]
 	if ok {
 		res.RepArchivageCryptage = strings.TrimSpace(RepArchivageCryptage)
+	}
+	debugCompression, ok := mapConfig["global.debug_compression"]
+	if ok {
+		res.DebugCompression = strings.TrimSpace(debugCompression) == "true"
+	}
+	debugArchivage, ok := mapConfig["global.debug_archivage"]
+	if ok {
+		res.DebugArchivage = strings.TrimSpace(debugArchivage) == "true"
 	}
 	nbJourArchive, ok := mapConfig["global.nb_jour_archive"]
 	if ok {

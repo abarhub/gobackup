@@ -28,14 +28,14 @@ func Archivage(global config.BackupGlobal) error {
 	if global.NbJourArchivage > 0 {
 		if global.RepArchivageCompress != "" {
 			log.Printf("archivage des fichiers compressés (nb jours:%d)", global.NbJourArchivage)
-			err := archive(global.RepCompression, global.RepArchivageCompress, global.NbJourArchivage)
+			err := archive(global.RepCompression, global.RepArchivageCompress, global.NbJourArchivage, global.DebugArchivage)
 			if err != nil {
 				return fmt.Errorf("erreur pour archiver les fichiers compressés: %w", err)
 			}
 		}
 		if global.RepArchivageCryptage != "" {
 			log.Printf("archivage des fichiers cryptés (nb jours:%d)", global.NbJourArchivage)
-			err := archive(global.RepCryptage, global.RepArchivageCryptage, global.NbJourArchivage)
+			err := archive(global.RepCryptage, global.RepArchivageCryptage, global.NbJourArchivage, global.DebugArchivage)
 			if err != nil {
 				return fmt.Errorf("erreur pour archiver les fichiers cryptés: %w", err)
 			}
@@ -44,7 +44,7 @@ func Archivage(global config.BackupGlobal) error {
 	return nil
 }
 
-func archive(repertoireSource string, repertoireDestination string, nbJours int) error {
+func archive(repertoireSource string, repertoireDestination string, nbJours int, debug bool) error {
 	listeFichiers := []fichier{}
 	filepath.WalkDir(repertoireSource, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -106,7 +106,9 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int)
 		return nil
 	})
 
-	log.Printf("liste des fichiers: %v", listeFichiers)
+	if debug {
+		log.Printf("liste des fichiers: %v", listeFichiers)
+	}
 
 	sort.Slice(listeFichiers, func(i, j int) bool {
 		return listeFichiers[i].date.Before(listeFichiers[j].date)
@@ -114,7 +116,9 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int)
 
 	slices.Reverse(listeFichiers)
 
-	log.Printf("liste des fichiers triés: %v", listeFichiers)
+	if debug {
+		log.Printf("liste des fichiers triés: %v", listeFichiers)
+	}
 
 	now := time.Now()
 	max := now.AddDate(0, 0, -nbJours)
@@ -146,7 +150,10 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int)
 		}
 	}
 
-	log.Printf("liste des fichiers a déplacer: %v", fichierADeplacer)
+	log.Printf("nombre de fichiers à déplacer : %d", len(fichierADeplacer))
+	if debug {
+		log.Printf("liste des fichiers à déplacer: %v", fichierADeplacer)
+	}
 
 	for _, fichier := range fichierADeplacer {
 		rep := filepath.Base(filepath.Dir(fichier.path))
@@ -162,6 +169,7 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int)
 }
 
 func moveFile(source, destination string) (err error) {
+	log.Printf("deplacement %s vers %s", source, destination)
 	destDir := filepath.Dir(destination)
 	if _, err := os.Stat(destDir); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(destDir, os.ModePerm)

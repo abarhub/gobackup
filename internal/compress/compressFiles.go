@@ -140,7 +140,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 		}
 	}
 
-	log.Printf("trie de la liste %v ...", liste)
+	if global.DebugCompression {
+		log.Printf("trie de la liste %v ...", liste)
+	}
 	slices.SortFunc(liste,
 		func(a, b string) int {
 			var t01, t02 time.Time
@@ -178,7 +180,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 
 	//sort.Sort(sort.StringSlice(liste))
 
-	log.Printf("liste sorted : %v", liste)
+	if global.DebugCompression {
+		log.Printf("liste sorted : %v", liste)
+	}
 
 	nbBackupIncremental := 0
 	var dateDebut time.Time
@@ -188,7 +192,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	if global.NbBackupIncremental > 0 {
 		for i := len(liste) - 1; i >= 0; i-- {
 			s := liste[i]
-			log.Printf("boucle %d : %s", i, s)
+			if global.DebugCompression {
+				log.Printf("boucle %d : %s", i, s)
+			}
 			if !dateDebutTrouve {
 				var s0 string
 				if strings.HasPrefix(s, debutComplet) {
@@ -198,7 +204,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 				}
 				if len(s0) == 18 {
 					s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
-					log.Printf("s0 : %s", s0)
+					if global.DebugCompression {
+						log.Printf("s0 : %s", s0)
+					}
 					tt, err0 := time.Parse("20060102_150405.000", s0)
 					if err0 != nil {
 						// erreur de parsing => on ignore le fichier
@@ -208,13 +216,17 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 					}
 				}
 			}
-			log.Printf("dateDebutTrouve : %v, dateDebut : %v", dateDebutTrouve, dateDebut)
+			if global.DebugCompression {
+				log.Printf("dateDebutTrouve : %v, dateDebut : %v", dateDebutTrouve, dateDebut)
+			}
 			if strings.HasPrefix(s, "backupc_") {
 				break
 			} else {
 				nbBackupIncremental++
 			}
-			log.Printf("nbBackupIncremental : %s", nbBackupIncremental)
+			if global.DebugCompression {
+				log.Printf("nbBackupIncremental : %s", nbBackupIncremental)
+			}
 		}
 	}
 
@@ -233,7 +245,9 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 		}
 	}
 
-	log.Printf("liste %v", liste)
+	if global.DebugCompression {
+		log.Printf("liste %v", liste)
+	}
 	log.Printf("backup complet: %v date: %v", backupComplet, t1)
 
 	return backupComplet, t1, nil
