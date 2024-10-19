@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/BurntSushi/toml"
 	"log"
 	"os"
 	"strconv"
@@ -15,7 +16,7 @@ type TypeCrypt int
 
 const (
 	CryptGpg TypeCrypt = 1 << iota
-	CryptAge           = 1 << iota
+	CryptAge TypeCrypt = 1 << iota
 )
 
 type BackupGlobal struct {
@@ -49,7 +50,139 @@ type Backup struct {
 	FileListe string
 }
 
+type configToml struct {
+	Global configGlobalToml
+	Backup map[string]configBackupToml
+}
+
+type configGlobalToml struct {
+	//Liste_backups             string
+	Rep_7zip                  string
+	Rep_gpg                   string
+	Rep_compression           string
+	Rep_cryptage              string
+	Nb_backup_incremental     int
+	Recipient                 string
+	ActiveVss                 bool
+	Logdir                    string
+	Type_cryptage             string
+	Rep_age                   string
+	Age_recipien              string
+	Rep_archivage_compression string
+	Rep_archivage_cryptage    string
+	Nb_jour_archivage         int
+	Debug_compression         bool
+	Debug_archivage           bool
+}
+
+type configBackupToml struct {
+	Rep_a_sauver      []string
+	Rep_nom_a_ignorer []string
+	Rep_a_ignorer     []string
+}
+
 func InitialisationConfig(filename string) (BackupGlobal, error) {
+	var res = BackupGlobal{}
+	var config configToml
+	_, err := toml.DecodeFile(filename, &config)
+	if err != nil {
+		return BackupGlobal{}, fmt.Errorf("erreur pour lire le fichier %s %w", filename, err)
+	}
+
+	res.Rep7zip = config.Global.Rep_7zip
+	res.RepGpg = config.Global.Rep_gpg
+	res.RepCompression = config.Global.Rep_compression
+	res.RepCryptage = config.Global.Rep_cryptage
+	res.NbBackupIncremental = config.Global.Nb_backup_incremental
+	res.Recipient = config.Global.Recipient
+	res.ActiveVss = config.Global.ActiveVss
+	res.LogDir = config.Global.Logdir
+	res.RepAge = config.Global.Rep_age
+	res.AgeRecipien = config.Global.Age_recipien
+	res.RepArchivageCompress = config.Global.Rep_archivage_compression
+	res.RepArchivageCryptage = config.Global.Rep_archivage_cryptage
+	res.NbJourArchivage = config.Global.Nb_jour_archivage
+	res.DebugCompression = config.Global.Debug_compression
+	res.DebugArchivage = config.Global.Debug_archivage
+	if config.Global.Type_cryptage == "gpg" {
+		res.TypeCryptage = CryptGpg
+	} else if config.Global.Type_cryptage == "age" {
+		res.TypeCryptage = CryptAge
+	} else {
+		return BackupGlobal{}, errors.New("le paramètre typeCryptage n'est pas valide (valeurs possibles: gpg, age)")
+	}
+
+	res.DateHeure = strings.ReplaceAll(time.Now().Format("20060102_150405.000"), ".", "")
+
+	if len(config.Backup) > 0 {
+
+		for nom, configToml := range config.Backup {
+			backup := Backup{}
+			backup.Nom = nom
+			backup.Rep = configToml.Rep_a_sauver
+			backup.Set = map[string]bool{}
+			backup.Map2 = map[string][]string{}
+			if len(configToml.Rep_nom_a_ignorer) > 0 {
+				for _, nom := range configToml.Rep_nom_a_ignorer {
+					backup.Set[nom] = true
+				}
+			}
+			if len(configToml.Rep_a_ignorer) > 0 {
+				map2 := map[string][]string{}
+				for _, v := range configToml.Rep_a_ignorer {
+					addMap(&map2, v)
+				}
+				backup.Map2 = map2
+			}
+			res.ListeBackup = append(res.ListeBackup, backup)
+		}
+
+	}
+
+	if len(res.ListeBackup) == 0 {
+		return BackupGlobal{}, errors.New("no liste backup")
+	}
+
+	if len(res.Rep7zip) == 0 {
+		return BackupGlobal{}, errors.New("no 7zip directory")
+	}
+
+	if len(res.RepCompression) == 0 {
+		return BackupGlobal{}, errors.New("no compress directory")
+	}
+
+	if len(res.RepCryptage) == 0 {
+		return BackupGlobal{}, errors.New("no crypt directory")
+	}
+
+	if res.NbBackupIncremental < 0 {
+		return BackupGlobal{}, errors.New("nbBackupIncremental doit être superieur ou égal à 0")
+	}
+
+	if res.TypeCryptage == CryptGpg {
+		if len(res.RepGpg) == 0 {
+			return BackupGlobal{}, errors.New("no gpg directory")
+		}
+
+		if len(res.Recipient) == 0 {
+			return BackupGlobal{}, errors.New("le paramètre recipient est vide")
+		}
+
+	} else {
+		if len(res.RepAge) == 0 {
+			return BackupGlobal{}, errors.New("no age directory")
+		}
+
+		if len(res.AgeRecipien) == 0 {
+			return BackupGlobal{}, errors.New("le paramètre ageRecipient est vide")
+		}
+
+	}
+
+	return res, nil
+}
+
+func InitialisationConfig0(filename string) (BackupGlobal, error) {
 	var res = BackupGlobal{}
 
 	file, err := os.Open(filename)
@@ -100,7 +233,7 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 		if len(nbBackupIncremental) > 0 {
 			res.NbBackupIncremental, err = strconv.Atoi(nbBackupIncremental)
 			if err != nil {
-				return BackupGlobal{}, fmt.Errorf("le paramètre global.nb_backup_incremental n'est pas un nombre", err)
+				return BackupGlobal{}, fmt.Errorf("le paramètre global.nb_backup_incremental n'est pas un nombre %v", err)
 			}
 		} else {
 			res.NbBackupIncremental = 0
@@ -158,7 +291,7 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 		if len(nbJourArchive) > 0 {
 			res.NbJourArchivage, err = strconv.Atoi(nbJourArchive)
 			if err != nil {
-				return BackupGlobal{}, fmt.Errorf("le paramètre global.nb_jour_archive n'est pas un nombre", err)
+				return BackupGlobal{}, fmt.Errorf("le paramètre global.nb_jour_archive n'est pas un nombre %v", err)
 			}
 		} else {
 			res.NbBackupIncremental = 0
