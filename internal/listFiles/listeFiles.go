@@ -105,7 +105,7 @@ func parcourt(res config.Backup, complet bool, date time.Time, configGlobal conf
 
 func convertie(root string, global config.BackupGlobal) string {
 	if len(root) >= 2 && root[1] == ':' && len(global.LettreVss) > 0 {
-		lettre := root[0]
+		lettre := strings.ToUpper(root)[0]
 		if link, ok := global.LettreVss[string(rune(lettre))]; ok {
 			root2 := link + root[2:]
 			return root2
