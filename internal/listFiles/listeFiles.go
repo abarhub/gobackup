@@ -37,7 +37,7 @@ func parcourt(res config.Backup, complet bool, date time.Time, configGlobal conf
 	nbFichier := 0
 	f, err := os.OpenFile(res.FileListe, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
-		return 0, fmt.Errorf("erreur pour creer le fichier %s : %v", res.FileListe, err)
+		return 0, fmt.Errorf("erreur pour creer le fichier '%s' : %v", res.FileListe, err)
 	}
 
 	defer func(f *os.File) {

@@ -134,6 +134,11 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 				}
 				backup.Map2 = map2
 			}
+			fileTemp, err := createTempFile("listeFichiers_" + backup.Nom)
+			if err != nil {
+				return BackupGlobal{}, fmt.Errorf("erreur pour creer le fichier temporaire : %v", err)
+			}
+			backup.FileListe = fileTemp
 			res.ListeBackup = append(res.ListeBackup, backup)
 		}
 
