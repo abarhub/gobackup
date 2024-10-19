@@ -118,8 +118,8 @@ func testEqSuffixSlice(suffix, tab []string) bool {
 	if len(suffix) > len(tab) {
 		return false
 	}
-	for i := len(suffix) - 1; i >= 0; i-- {
-		if suffix[i] != tab[i] {
+	for i := 0; i < len(suffix); i++ {
+		if suffix[len(suffix)-i-1] != tab[len(tab)-i-1] {
 			return false
 		}
 	}
