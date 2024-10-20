@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"github.com/BurntSushi/toml"
 	"log"
 	"os"
 	"reflect"
@@ -334,6 +335,29 @@ Rep_a_ignorer=["rep01\\rep04"]
 			compareDeepMapBool(t, backup.Exclusion.Set, map[string]bool{"XXX": true}, "ListeBackup.Set")
 			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][]string{"rep04": []string{"rep01", "rep04"}}, "ListeBackup.Map2")
 		}
+	}
+}
+
+func TestAjoutExclusion(t *testing.T) {
+	s := `
+[global]
+[backup.nom1]
+Rep_nom_a_ignorer=["aaa","bbb"]
+Rep_a_ignorer=["rep1\\rep2","rep3\\rep4\\rep5"]
+`
+	var config configToml
+	_, err := toml.Decode(s, &config)
+	if err != nil {
+		t.Errorf("InitialisationConfig() error = %v", err)
+		return
+	}
+
+	if len(config.Backup) != 1 {
+		t.Errorf("InitialisationConfig() aucun backup: %d", len(config.Backup))
+	} else {
+		exclusion := AjoutExclusion(config.Backup["nom1"])
+		compareDeepMapBool(t, exclusion.Set, map[string]bool{"aaa": true, "bbb": true}, "ListeBackup.Set")
+		compareDeepMapListString(t, exclusion.Map2, map[string][]string{"rep2": {"rep1", "rep2"}, "rep5": {"rep3", "rep4", "rep5"}}, "ListeBackup.Map2")
 	}
 }
 

@@ -122,22 +122,7 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 			backup := Backup{}
 			backup.Nom = nom
 			backup.Rep = configToml.Rep_a_sauver
-			backup.Exclusion = ExclusionType{
-				Set:  map[string]bool{},
-				Map2: map[string][]string{},
-			}
-			if len(configToml.Rep_nom_a_ignorer) > 0 {
-				for _, nom := range configToml.Rep_nom_a_ignorer {
-					backup.Exclusion.Set[nom] = true
-				}
-			}
-			if len(configToml.Rep_a_ignorer) > 0 {
-				map2 := map[string][]string{}
-				for _, v := range configToml.Rep_a_ignorer {
-					addMap(&map2, v)
-				}
-				backup.Exclusion.Map2 = map2
-			}
+			backup.Exclusion = AjoutExclusion(configToml)
 			fileTemp, err := createTempFile("listeFichiers_" + backup.Nom)
 			if err != nil {
 				return BackupGlobal{}, fmt.Errorf("erreur pour creer le fichier temporaire : %v", err)
@@ -189,6 +174,23 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 	}
 
 	return res, nil
+}
+
+func AjoutExclusion(configToml configBackupToml) ExclusionType {
+	var exclusion = ExclusionType{Set: map[string]bool{}, Map2: map[string][]string{}}
+	if len(configToml.Rep_nom_a_ignorer) > 0 {
+		for _, nom := range configToml.Rep_nom_a_ignorer {
+			exclusion.Set[nom] = true
+		}
+	}
+	if len(configToml.Rep_a_ignorer) > 0 {
+		map2 := map[string][]string{}
+		for _, v := range configToml.Rep_a_ignorer {
+			addMap(&map2, v)
+		}
+		exclusion.Map2 = map2
+	}
+	return exclusion
 }
 
 //func InitialisationConfig0(filename string) (BackupGlobal, error) {
