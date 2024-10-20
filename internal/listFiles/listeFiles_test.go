@@ -256,3 +256,34 @@ func Test_testEqSuffixSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestExclusion(t *testing.T) {
+	type args struct {
+		path      string
+		exclusion config.ExclusionType
+		dir       bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want IgnoreParcourt
+	}{
+		// TODO: Add test cases.
+		{name: "test1", args: args{path: "rep/test1", exclusion: config.ExclusionType{Set: map[string]bool{"test1": true}}, dir: true}, want: IgnoreRepertoire},
+		{name: "test2", args: args{path: "rep/test1/fichier1.txt", exclusion: config.ExclusionType{Set: map[string]bool{"fichier1.txt": true}}, dir: false}, want: IgnoreFichier},
+		{name: "test3", args: args{path: "rep/test1/fichier1.txt", exclusion: config.ExclusionType{Set: map[string]bool{"fichier2.txt": true}}, dir: false}, want: Continue},
+		{name: "test4", args: args{path: "rep/test1", exclusion: config.ExclusionType{Set: map[string]bool{"test2": true}}, dir: true}, want: Continue},
+		{name: "test5", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][]string{"rep01": {"test1", "rep01"}}}, dir: true}, want: IgnoreRepertoire},
+		{name: "test6", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][]string{"rep01": {"rep", "test1", "rep01"}}}, dir: true}, want: IgnoreRepertoire},
+		{name: "test7", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][]string{"rep01": {"rep01"}}}, dir: true}, want: IgnoreRepertoire},
+		{name: "test8", args: args{path: "rep/test1/rep02", exclusion: config.ExclusionType{Map2: map[string][]string{"rep01": {"rep", "test1", "rep01"}}}, dir: true}, want: Continue},
+		{name: "test9", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][]string{"rep01": {"test1", "rep02"}}}, dir: true}, want: Continue},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Exclusion(tt.args.path, tt.args.exclusion, tt.args.dir); got != tt.want {
+				t.Errorf("Exclusion() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
