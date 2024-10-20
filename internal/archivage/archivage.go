@@ -46,7 +46,7 @@ func Archivage(global config.BackupGlobal) error {
 
 func archive(repertoireSource string, repertoireDestination string, nbJours int, debug bool) error {
 	listeFichiers := []fichier{}
-	filepath.WalkDir(repertoireSource, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(repertoireSource, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -105,6 +105,9 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int,
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	if debug {
 		log.Printf("liste des fichiers: %v", listeFichiers)
