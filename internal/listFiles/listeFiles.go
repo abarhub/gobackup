@@ -15,6 +15,14 @@ type ListeFichiers struct {
 	NbFiles    int
 }
 
+type IgnoreParcourt int
+
+const (
+	Continue IgnoreParcourt = iota + 1
+	IgnoreRepertoire
+	IgnoreFichier
+)
+
 func ListeFiles(backup config.Backup, complet bool, date time.Time, global config.BackupGlobal) (ListeFichiers, error) {
 
 	log.Printf("ecriture de la liste des fichiers dans  %s (complet=%v) ...\n", backup.FileListe, complet)
@@ -56,22 +64,32 @@ func parcourt(res config.Backup, complet bool, date time.Time, configGlobal conf
 				fmt.Printf("Erreur d'accès à %q: %v\n", path, err)
 				return err
 			}
-			fileName := filepath.Base(path)
 
-			_, ok := res.Exclusion.Set[fileName]
-			if ok {
+			ignore := Exclusion(path, res.Exclusion, info.IsDir())
+			if ignore == IgnoreFichier {
+				fmt.Printf("Fichier ignoré: %q\n", path)
+				return nil
+			} else if ignore == IgnoreRepertoire {
 				fmt.Printf("Répertoire ignoré: %q\n", path)
 				return filepath.SkipDir
 			}
 
-			_, ok2 := res.Exclusion.Map2[fileName]
-			if ok2 {
-				tab := strings.Split(path, "\\")
-				if testEqSuffixSlice(res.Exclusion.Map2[fileName], tab) {
-					fmt.Printf("Répertoire ignoré: %q\n", path)
-					return filepath.SkipDir
-				}
-			}
+			//fileName := filepath.Base(path)
+			//
+			//_, ok := res.Exclusion.Set[fileName]
+			//if ok {
+			//	fmt.Printf("Répertoire ignoré: %q\n", path)
+			//	return filepath.SkipDir
+			//}
+			//
+			//_, ok2 := res.Exclusion.Map2[fileName]
+			//if ok2 {
+			//	tab := strings.Split(path, "\\")
+			//	if testEqSuffixSlice(res.Exclusion.Map2[fileName], tab) {
+			//		fmt.Printf("Répertoire ignoré: %q\n", path)
+			//		return filepath.SkipDir
+			//	}
+			//}
 
 			if !info.IsDir() {
 
@@ -101,6 +119,41 @@ func parcourt(res config.Backup, complet bool, date time.Time, configGlobal conf
 	}
 
 	return nbFichier, nil
+}
+
+func Exclusion(path string, exclusion config.ExclusionType, dir bool) IgnoreParcourt {
+	fileName := filepath.Base(path)
+
+	if dir {
+		_, ok := exclusion.Set[fileName]
+		if ok {
+			return IgnoreRepertoire
+		}
+
+		_, ok2 := exclusion.Map2[fileName]
+		if ok2 {
+			s := strings.Replace(path, "\\", "/", -1)
+			tab := strings.Split(s, "/")
+			if testEqSuffixSlice(exclusion.Map2[fileName], tab) {
+				return IgnoreRepertoire
+			}
+		}
+	} else {
+		_, ok := exclusion.Set[fileName]
+		if ok {
+			return IgnoreFichier
+		}
+
+		_, ok2 := exclusion.Map2[fileName]
+		if ok2 {
+			s := strings.Replace(path, "\\", "/", -1)
+			tab := strings.Split(s, "/")
+			if testEqSuffixSlice(exclusion.Map2[fileName], tab) {
+				return IgnoreFichier
+			}
+		}
+	}
+	return Continue
 }
 
 func convertie(root string, global config.BackupGlobal) string {
