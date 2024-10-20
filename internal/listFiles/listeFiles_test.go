@@ -43,10 +43,18 @@ func TestListeFiles(t *testing.T) {
 		{name: "test4", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt", Rep: []string{"rep2"}, Set: map[string]bool{"test1": true}},
 			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 3},
 			want2: []string{"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv"}},
-		{name: "test2", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
+		{name: "test5", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
 			Rep: []string{"rep2"}, Map2: map[string][]string{"test1": {"rep2", "test1"}}},
 			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 3},
 			want2: []string{"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv"}},
+		{name: "test6", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
+			Rep: []string{"rep3"}, Map2: map[string][]string{"test04": {"rep3", "test03", "test04"}}},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 4},
+			want2: []string{"rep3/fichier1.txt", "rep3/test01/fichier2.txt", "rep3/test01/test02/fichier3.txt", "rep3/test03/fichier4.txt"}},
+		{name: "test7", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
+			Rep: []string{"rep4"}, Map2: map[string][]string{"test02": {"rep4", "test03", "test02"}}},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 4},
+			want2: []string{"rep4/fichier1.txt", "rep4/test01/fichier2.txt", "rep4/test01/test02/fichier3.txt", "rep4/test03/fichier4.txt"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -114,8 +122,19 @@ func lectureFichier(files string, tempDir string) ([]string, error) {
 
 func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wants *ListeFichiers) error {
 	repertoireTemporaire := arguments.repTemp
-	liste := []string{"rep/fichier1.txt", "rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv",
-		"rep2/test1/fichier01.txt", "rep2/test1/fichier02.txt", "rep2/test1/fichier03.doc"}
+	liste := []string{
+		// rep
+		"rep/fichier1.txt",
+		// rep2
+		"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv",
+		"rep2/test1/fichier01.txt", "rep2/test1/fichier02.txt", "rep2/test1/fichier03.doc",
+		// rep3
+		"rep3/fichier1.txt", "rep3/test01/fichier2.txt", "rep3/test01/test02/fichier3.txt",
+		"rep3/test03/fichier4.txt", "rep3/test03/test04/fichier5.txt",
+		// rep4
+		"rep4/fichier1.txt", "rep4/test01/fichier2.txt", "rep4/test01/test02/fichier3.txt",
+		"rep4/test03/fichier4.txt", "rep4/test03/test02/fichier5.txt",
+	}
 
 	for _, fichier := range liste {
 		f := repertoireTemporaire + "/" + fichier
