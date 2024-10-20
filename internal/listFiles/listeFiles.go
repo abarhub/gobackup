@@ -134,8 +134,10 @@ func Exclusion(path string, exclusion config.ExclusionType, dir bool) IgnoreParc
 		if ok2 {
 			s := strings.Replace(path, "\\", "/", -1)
 			tab := strings.Split(s, "/")
-			if testEqSuffixSlice(exclusion.Map2[fileName], tab) {
-				return IgnoreRepertoire
+			for _, list := range exclusion.Map2[fileName] {
+				if testEqSuffixSlice(list, tab) {
+					return IgnoreRepertoire
+				}
 			}
 		}
 	} else {
@@ -148,8 +150,10 @@ func Exclusion(path string, exclusion config.ExclusionType, dir bool) IgnoreParc
 		if ok2 {
 			s := strings.Replace(path, "\\", "/", -1)
 			tab := strings.Split(s, "/")
-			if testEqSuffixSlice(exclusion.Map2[fileName], tab) {
-				return IgnoreFichier
+			for _, list := range exclusion.Map2[fileName] {
+				if testEqSuffixSlice(list, tab) {
+					return IgnoreFichier
+				}
 			}
 		}
 	}

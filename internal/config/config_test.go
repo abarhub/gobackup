@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -239,7 +240,7 @@ Rep_a_ignorer=[]
 		compare(t, res.ListeBackup[0].Nom, "nom1", "ListeBackup.nom")
 		compareDeep(t, res.ListeBackup[0].Rep, []string{"c:\\test_backup"}, "ListeBackup.Rep")
 		compareDeepMapBool(t, res.ListeBackup[0].Exclusion.Set, map[string]bool{}, "ListeBackup.Set")
-		compareDeepMapListString(t, res.ListeBackup[0].Exclusion.Map2, map[string][]string{}, "ListeBackup.Map2")
+		compareDeepMapListString(t, res.ListeBackup[0].Exclusion.Map2, map[string][][]string{}, "ListeBackup.Map2")
 	}
 }
 
@@ -324,7 +325,7 @@ Rep_a_ignorer=["rep01\\rep04"]
 			compare(t, backup.Nom, "nom1", "ListeBackup.nom")
 			compareDeep(t, backup.Rep, []string{"c:\\test_backup"}, "ListeBackup.Rep")
 			compareDeepMapBool(t, backup.Exclusion.Set, map[string]bool{"aaa": true, "bbb": true}, "ListeBackup.Set")
-			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][]string{"rep2": []string{"rep1", "rep2"}, "rep5": []string{"rep3", "rep4", "rep5"}}, "ListeBackup.Map2")
+			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][][]string{"rep2": [][]string{{"rep1", "rep2"}}, "rep5": [][]string{{"rep3", "rep4", "rep5"}}}, "ListeBackup.Map2")
 		}
 		backup, err = getBackup(res.ListeBackup, "nom2")
 		if err != nil {
@@ -333,7 +334,7 @@ Rep_a_ignorer=["rep01\\rep04"]
 			compare(t, backup.Nom, "nom2", "ListeBackup.nom")
 			compareDeep(t, backup.Rep, []string{"c:\\test_backup2"}, "ListeBackup.Rep")
 			compareDeepMapBool(t, backup.Exclusion.Set, map[string]bool{"XXX": true}, "ListeBackup.Set")
-			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][]string{"rep04": []string{"rep01", "rep04"}}, "ListeBackup.Map2")
+			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][][]string{"rep04": [][]string{{"rep01", "rep04"}}}, "ListeBackup.Map2")
 		}
 	}
 }
@@ -357,7 +358,7 @@ Rep_a_ignorer=["rep1\\rep2","rep3\\rep4\\rep5"]
 	} else {
 		exclusion := AjoutExclusion(config.Backup["nom1"])
 		compareDeepMapBool(t, exclusion.Set, map[string]bool{"aaa": true, "bbb": true}, "ListeBackup.Set")
-		compareDeepMapListString(t, exclusion.Map2, map[string][]string{"rep2": {"rep1", "rep2"}, "rep5": {"rep3", "rep4", "rep5"}}, "ListeBackup.Map2")
+		compareDeepMapListString(t, exclusion.Map2, map[string][][]string{"rep2": {{"rep1", "rep2"}}, "rep5": {{"rep3", "rep4", "rep5"}}}, "ListeBackup.Map2")
 	}
 }
 
@@ -390,7 +391,7 @@ func compareDeepMapBool(t *testing.T, got, want map[string]bool, nomChamps strin
 	}
 }
 
-func compareDeepMapListString(t *testing.T, got, want map[string][]string, nomChamps string) {
+func compareDeepMapListString(t *testing.T, got, want map[string][][]string, nomChamps string) {
 	if (got == nil || len(got) == 0) && (want == nil || len(want) == 0) {
 		return
 	} else if !reflect.DeepEqual(got, want) {
@@ -400,44 +401,45 @@ func compareDeepMapListString(t *testing.T, got, want map[string][]string, nomCh
 
 func Test_addMap(t *testing.T) {
 	type args struct {
-		map2 *map[string][]string
+		map2 *map[string][][]string
 		s    string
 	}
 	tests := []struct {
 		name string
 		args args
+		want *map[string][][]string
 	}{
 		// TODO: Add test cases.
+		{name: "test1", args: args{map2: &map[string][][]string{}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep", "test1"}}}},
+		{name: "test2", args: args{map2: &map[string][][]string{}, s: "rep/test1/test2"}, want: &map[string][][]string{"test2": {{"rep", "test1", "test2"}}}},
+		{name: "test3", args: args{map2: &map[string][][]string{"test1": {{"rep0", "test1"}}}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep0", "test1"}, {"rep", "test1"}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			addMap(tt.args.map2, tt.args.s)
+			if !reflect.DeepEqual(tt.args.map2, tt.want) {
+				t.Errorf("addMap() got = %v, want %v", tt.args.map2, tt.want)
+			}
 		})
 	}
 }
 
 func Test_createTempFile(t *testing.T) {
-	type args struct {
-		name string
+	filename := "toto.txt"
+	got, err := createTempFile(filename)
+	if (err != nil) != false {
+		t.Errorf("createTempFile() error = %v", err)
+		return
 	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
+	if !strings.Contains(got, filename) {
+		t.Errorf("createTempFile() got = %v, want %v", got, filename)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := createTempFile(tt.args.name)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("createTempFile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("createTempFile() got = %v, want %v", got, tt.want)
-			}
-		})
+	if _, err := os.Stat(got); errors.Is(err, os.ErrNotExist) {
+		t.Errorf("createTempFile() le fichier %s n'existe pas", got)
+	} else {
+		err = os.Remove(got)
+		if err != nil {
+			t.Errorf("createTempFile() delete %s error = %v", got, err)
+		}
 	}
 }

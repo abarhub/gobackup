@@ -49,7 +49,7 @@ type Backup struct {
 
 type ExclusionType struct {
 	Set  map[string]bool
-	Map2 map[string][]string
+	Map2 map[string][][]string
 }
 
 type configToml struct {
@@ -177,14 +177,14 @@ func InitialisationConfig(filename string) (BackupGlobal, error) {
 }
 
 func AjoutExclusion(configToml configBackupToml) ExclusionType {
-	var exclusion = ExclusionType{Set: map[string]bool{}, Map2: map[string][]string{}}
+	var exclusion = ExclusionType{Set: map[string]bool{}, Map2: map[string][][]string{}}
 	if len(configToml.Rep_nom_a_ignorer) > 0 {
 		for _, nom := range configToml.Rep_nom_a_ignorer {
 			exclusion.Set[nom] = true
 		}
 	}
 	if len(configToml.Rep_a_ignorer) > 0 {
-		map2 := map[string][]string{}
+		map2 := map[string][][]string{}
 		for _, v := range configToml.Rep_a_ignorer {
 			addMap(&map2, v)
 		}
@@ -403,9 +403,18 @@ func AjoutExclusion(configToml configBackupToml) ExclusionType {
 //	return res, nil
 //}
 
-func addMap(map2 *map[string][]string, s string) {
-	tab := strings.Split(s, "\\")
-	(*map2)[tab[len(tab)-1]] = tab
+func addMap(map2 *map[string][][]string, s string) {
+	s2 := strings.Replace(s, "\\", "/", -1)
+	tab := strings.Split(s2, "/")
+	key := tab[len(tab)-1]
+	if tab2, ok := (*map2)[key]; ok {
+		tab2 = append(tab2, tab)
+		(*map2)[key] = tab2
+	} else {
+		var tab2 [][]string
+		tab2 = append(tab2, tab)
+		(*map2)[key] = tab2
+	}
 }
 
 func createTempFile(name string) (string, error) {
