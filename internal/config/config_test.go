@@ -53,6 +53,8 @@ Rep_archivage_cryptage="c:\\aaa006"
 Nb_jour_archivage=15
 Debug_compression=true
 Debug_archivage=true
+[backup.nom1]
+Rep_a_sauver=["c:\\test_backup"]
 `
 	filename := t.TempDir() + "/test1.config"
 	f, err := os.Create(filename)
@@ -117,6 +119,8 @@ Rep_archivage_cryptage="c:\\aaa006_2"
 Nb_jour_archivage=25
 Debug_compression=false
 Debug_archivage=false
+[backup.nom1]
+Rep_a_sauver=["c:\\test_backup"]
 `
 	filename := t.TempDir() + "/test1.config"
 	f, err := os.Create(filename)
@@ -233,8 +237,8 @@ Rep_a_ignorer=[]
 	} else {
 		compare(t, res.ListeBackup[0].Nom, "nom1", "ListeBackup.nom")
 		compareDeep(t, res.ListeBackup[0].Rep, []string{"c:\\test_backup"}, "ListeBackup.Rep")
-		compareDeepMapBool(t, res.ListeBackup[0].Set, map[string]bool{}, "ListeBackup.Set")
-		compareDeepMapListString(t, res.ListeBackup[0].Map2, map[string][]string{}, "ListeBackup.Map2")
+		compareDeepMapBool(t, res.ListeBackup[0].Exclusion.Set, map[string]bool{}, "ListeBackup.Set")
+		compareDeepMapListString(t, res.ListeBackup[0].Exclusion.Map2, map[string][]string{}, "ListeBackup.Map2")
 	}
 }
 
@@ -318,8 +322,8 @@ Rep_a_ignorer=["rep01\\rep04"]
 		} else {
 			compare(t, backup.Nom, "nom1", "ListeBackup.nom")
 			compareDeep(t, backup.Rep, []string{"c:\\test_backup"}, "ListeBackup.Rep")
-			compareDeepMapBool(t, backup.Set, map[string]bool{"aaa": true, "bbb": true}, "ListeBackup.Set")
-			compareDeepMapListString(t, backup.Map2, map[string][]string{"rep2": []string{"rep1", "rep2"}, "rep5": []string{"rep3", "rep4", "rep5"}}, "ListeBackup.Map2")
+			compareDeepMapBool(t, backup.Exclusion.Set, map[string]bool{"aaa": true, "bbb": true}, "ListeBackup.Set")
+			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][]string{"rep2": []string{"rep1", "rep2"}, "rep5": []string{"rep3", "rep4", "rep5"}}, "ListeBackup.Map2")
 		}
 		backup, err = getBackup(res.ListeBackup, "nom2")
 		if err != nil {
@@ -327,8 +331,8 @@ Rep_a_ignorer=["rep01\\rep04"]
 		} else {
 			compare(t, backup.Nom, "nom2", "ListeBackup.nom")
 			compareDeep(t, backup.Rep, []string{"c:\\test_backup2"}, "ListeBackup.Rep")
-			compareDeepMapBool(t, backup.Set, map[string]bool{"XXX": true}, "ListeBackup.Set")
-			compareDeepMapListString(t, backup.Map2, map[string][]string{"rep04": []string{"rep01", "rep04"}}, "ListeBackup.Map2")
+			compareDeepMapBool(t, backup.Exclusion.Set, map[string]bool{"XXX": true}, "ListeBackup.Set")
+			compareDeepMapListString(t, backup.Exclusion.Map2, map[string][]string{"rep04": []string{"rep01", "rep04"}}, "ListeBackup.Map2")
 		}
 	}
 }
