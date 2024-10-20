@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"gobackup/internal/config"
+	"gobackup/internal/utils"
 	"log"
 	"os"
 	"path"
@@ -144,7 +145,7 @@ func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wa
 		if err != nil {
 			return err
 		}
-		err = createEmptyFile(f)
+		err = utils.CreateEmptyFile(f)
 		if err != nil {
 			return err
 		}
@@ -157,20 +158,6 @@ func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wa
 		}
 	}
 	wants.ListeFiles = arguments.backup.FileListe
-	return nil
-}
-
-func createEmptyFile(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-
-		}
-	}(f)
 	return nil
 }
 

@@ -73,19 +73,19 @@ func calculHash(fichier string, hasher hash.Hash) (string, error) {
 
 func VerifieHash(nom string, config config.BackupGlobal) error {
 
-	err := verifieFichiers(config.RepCompression + "/" + nom)
+	_, err := verifieFichiers(config.RepCompression + "/" + nom)
 	if err != nil {
 		return err
 	}
 
-	err = verifieFichiers(config.RepCryptage + "/" + nom)
+	_, err = verifieFichiers(config.RepCryptage + "/" + nom)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func verifieFichiers(repertoire string) error {
+func verifieFichiers(repertoire string) (int, error) {
 
 	extensionHash := extension
 	nbErreurs := 0
@@ -100,7 +100,7 @@ func verifieFichiers(repertoire string) error {
 			if d != nil {
 				rep = repertoire + "/" + d.Name()
 			}
-			return fmt.Errorf("erreur pour parcourit les fiuchiers pour le répertoire %s (%s,%s) : %w", rep, repertoire, path, err)
+			return fmt.Errorf("erreur pour parcourit les fichiers pour le répertoire %s (%s,%s) : %w", rep, repertoire, path, err)
 
 		}
 		if !d.IsDir() && !strings.HasSuffix(d.Name(), extensionHash) {
@@ -134,14 +134,14 @@ func verifieFichiers(repertoire string) error {
 		return nil
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if nbErreurs > 0 {
-		return fmt.Errorf("verifieFichiers found %d erreurs", nbErreurs)
+		return 0, fmt.Errorf("verifieFichiers found %d erreurs", nbErreurs)
 	} else {
 		log.Printf("aucune erreur dans les %d fichiers testés (%d ignorés)", nbFichiers, nbFichiersIgnores)
-		return nil
+		return nbFichiersIgnores, nil
 	}
 }
 

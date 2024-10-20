@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"github.com/BurntSushi/toml"
-	"log"
+	"gobackup/internal/utils"
 	"os"
 	"reflect"
 	"strings"
@@ -59,24 +59,10 @@ Debug_archivage=true
 Rep_a_sauver=["c:\\test_backup"]
 `
 	filename := t.TempDir() + "/test1.config"
-	f, err := os.Create(filename)
+	err := utils.CreateFile(filename, s)
 	if err != nil {
-		panic(err)
-	}
-
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Panic(err)
-		}
-	}(f)
-	_, err = f.WriteString(s)
-	if err != nil {
-		panic(err)
-	}
-	err = f.Sync()
-	if err != nil {
-		panic(err)
+		t.Errorf("CreateFile() erreur pour creer le fichier %s = %v", filename, err)
+		return
 	}
 
 	res, err := InitialisationConfig(filename)
@@ -125,24 +111,11 @@ Debug_archivage=false
 Rep_a_sauver=["c:\\test_backup"]
 `
 	filename := t.TempDir() + "/test1.config"
-	f, err := os.Create(filename)
-	if err != nil {
-		panic(err)
-	}
 
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Panic(err)
-		}
-	}(f)
-	_, err = f.WriteString(s)
+	err := utils.CreateFile(filename, s)
 	if err != nil {
-		panic(err)
-	}
-	err = f.Sync()
-	if err != nil {
-		panic(err)
+		t.Errorf("CreateFile() erreur pour creer le fichier %s = %v", filename, err)
+		return
 	}
 
 	res, err := InitialisationConfig(filename)
@@ -193,24 +166,11 @@ Rep_nom_a_ignorer=[]
 Rep_a_ignorer=[]
 `
 	filename := t.TempDir() + "/test1.config"
-	f, err := os.Create(filename)
-	if err != nil {
-		panic(err)
-	}
 
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Panic(err)
-		}
-	}(f)
-	_, err = f.WriteString(s)
+	err := utils.CreateFile(filename, s)
 	if err != nil {
-		panic(err)
-	}
-	err = f.Sync()
-	if err != nil {
-		panic(err)
+		t.Errorf("CreateFile() erreur pour creer le fichier %s = %v", filename, err)
+		return
 	}
 
 	res, err := InitialisationConfig(filename)
@@ -273,24 +233,11 @@ Rep_nom_a_ignorer=["XXX"]
 Rep_a_ignorer=["rep01\\rep04"]
 `
 	filename := t.TempDir() + "/test1.config"
-	f, err := os.Create(filename)
-	if err != nil {
-		panic(err)
-	}
 
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			log.Panic(err)
-		}
-	}(f)
-	_, err = f.WriteString(s)
+	err := utils.CreateFile(filename, s)
 	if err != nil {
-		panic(err)
-	}
-	err = f.Sync()
-	if err != nil {
-		panic(err)
+		t.Errorf("CreateFile() erreur pour creer le fichier %s = %v", filename, err)
+		return
 	}
 
 	res, err := InitialisationConfig(filename)
@@ -409,7 +356,6 @@ func Test_addMap(t *testing.T) {
 		args args
 		want *map[string][][]string
 	}{
-		// TODO: Add test cases.
 		{name: "test1", args: args{map2: &map[string][][]string{}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep", "test1"}}}},
 		{name: "test2", args: args{map2: &map[string][][]string{}, s: "rep/test1/test2"}, want: &map[string][][]string{"test2": {{"rep", "test1", "test2"}}}},
 		{name: "test3", args: args{map2: &map[string][][]string{"test1": {{"rep0", "test1"}}}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep0", "test1"}, {"rep", "test1"}}}},
