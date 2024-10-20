@@ -6,6 +6,7 @@ import (
 	"gobackup/internal/config"
 	"log"
 	"os"
+	"path"
 	"reflect"
 	"sort"
 	"strings"
@@ -113,46 +114,22 @@ func lectureFichier(files string, tempDir string) ([]string, error) {
 
 func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wants *ListeFichiers) error {
 	repertoireTemporaire := arguments.repTemp
-	err := os.Mkdir(repertoireTemporaire+"/rep", 0777)
-	if err != nil {
-		return err
+	liste := []string{"rep/fichier1.txt", "rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv",
+		"rep2/test1/fichier01.txt", "rep2/test1/fichier02.txt", "rep2/test1/fichier03.doc"}
+
+	for _, fichier := range liste {
+		f := repertoireTemporaire + "/" + fichier
+		path.Dir(f)
+		err := os.MkdirAll(path.Dir(f), 0777)
+		if err != nil {
+			return err
+		}
+		err = createEmptyFile(f)
+		if err != nil {
+			return err
+		}
 	}
-	err = createEmptyFile(repertoireTemporaire + "/rep/fichier1.txt")
-	if err != nil {
-		return err
-	}
-	err = os.Mkdir(repertoireTemporaire+"/rep2", 0777)
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/fichier1.txt")
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/fichier2.csv")
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/fichier3.csv")
-	if err != nil {
-		return err
-	}
-	err = os.Mkdir(repertoireTemporaire+"/rep2/test1", 0777)
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/test1/fichier01.txt")
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/test1/fichier02.txt")
-	if err != nil {
-		return err
-	}
-	err = createEmptyFile(repertoireTemporaire + "/rep2/test1/fichier03.doc")
-	if err != nil {
-		return err
-	}
+
 	for i := range backup.Rep {
 		rep := backup.Rep[i]
 		if rep != "" {
@@ -249,6 +226,7 @@ func Test_testEqSuffixSlice(t *testing.T) {
 		{name: "test7", args: args{suffix: []string{"aaa", "mon", "rep"}, tab: []string{"mon", "rep"}}, want: false},
 		{name: "test8", args: args{suffix: []string{"rep"}, tab: []string{"rep"}}, want: true},
 		{name: "test8", args: args{suffix: []string{"rep"}, tab: []string{"rep2"}}, want: false},
+		{name: "test8", args: args{suffix: []string{"rep", "test1", "myrep"}, tab: []string{"rep_root", "rep", "test1", "myrep"}}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
