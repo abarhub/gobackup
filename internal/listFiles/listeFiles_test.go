@@ -278,6 +278,7 @@ func TestExclusion(t *testing.T) {
 		{name: "test7", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][][]string{"rep01": {{"rep01"}}}}, dir: true}, want: IgnoreRepertoire},
 		{name: "test8", args: args{path: "rep/test1/rep02", exclusion: config.ExclusionType{Map2: map[string][][]string{"rep01": {{"rep", "test1", "rep01"}}}}, dir: true}, want: Continue},
 		{name: "test9", args: args{path: "rep/test1/rep01", exclusion: config.ExclusionType{Map2: map[string][][]string{"rep01": {{"test1", "rep02"}}}}, dir: true}, want: Continue},
+		{name: "test10", args: args{path: "rep\\test1\\rep01", exclusion: config.ExclusionType{Map2: map[string][][]string{"rep01": {{"test1", "rep01"}}}}, dir: true}, want: IgnoreRepertoire},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

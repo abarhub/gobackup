@@ -413,6 +413,8 @@ func Test_addMap(t *testing.T) {
 		{name: "test1", args: args{map2: &map[string][][]string{}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep", "test1"}}}},
 		{name: "test2", args: args{map2: &map[string][][]string{}, s: "rep/test1/test2"}, want: &map[string][][]string{"test2": {{"rep", "test1", "test2"}}}},
 		{name: "test3", args: args{map2: &map[string][][]string{"test1": {{"rep0", "test1"}}}, s: "rep/test1"}, want: &map[string][][]string{"test1": {{"rep0", "test1"}, {"rep", "test1"}}}},
+		{name: "test4", args: args{map2: &map[string][][]string{}, s: "rep\\test1\\test2"}, want: &map[string][][]string{"test2": {{"rep", "test1", "test2"}}}},
+		{name: "test5", args: args{map2: &map[string][][]string{}, s: "rep/test1\\test2"}, want: &map[string][][]string{"test2": {{"rep", "test1", "test2"}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
