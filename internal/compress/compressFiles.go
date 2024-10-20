@@ -225,7 +225,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 				nbBackupIncremental++
 			}
 			if global.DebugCompression {
-				log.Printf("nbBackupIncremental : %s", nbBackupIncremental)
+				log.Printf("nbBackupIncremental : %d", nbBackupIncremental)
 			}
 		}
 	}

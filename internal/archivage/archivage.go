@@ -161,7 +161,7 @@ func archive(repertoireSource string, repertoireDestination string, nbJours int,
 		dest := filepath.Clean(repertoireDestination + "/" + rep + "/" + fichier.nom)
 		err := moveFile(src, dest)
 		if err != nil {
-			return fmt.Errorf("erreur pour déplacer le fichier %s (%s - > %s) : %w", fichier, src, dest, err)
+			return fmt.Errorf("erreur pour déplacer le fichier %v (%s - > %s) : %w", fichier, src, dest, err)
 		}
 	}
 
