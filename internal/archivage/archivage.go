@@ -40,6 +40,8 @@ func Archivage(global config.BackupGlobal) error {
 				return fmt.Errorf("erreur pour archiver les fichiers cryptés: %w", err)
 			}
 		}
+	} else {
+		log.Printf("pas d'archivage")
 	}
 	return nil
 }
