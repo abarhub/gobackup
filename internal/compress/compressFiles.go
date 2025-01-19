@@ -231,7 +231,7 @@ func calculCompletFS(repertoire fs.FS, nomBackup string, now time.Time, debugCom
 	log.Printf("date: %v (%v), nbBackupIncr: %d, conf nbBackupIncr: %d",
 		dateDebut, dateDebutTrouve, nbBackupIncremental, nbBackupIncremental2)
 
-	if nbBackupIncremental2 == 0 || nbBackupIncremental >= nbBackupIncremental2 {
+	if nbBackupIncremental2 == 0 || nbBackupIncremental == 0 || nbBackupIncremental >= nbBackupIncremental2 {
 		backupComplet = true
 	} else {
 		backupComplet = false

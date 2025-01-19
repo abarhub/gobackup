@@ -142,19 +142,36 @@ func Test_calculCompletFS(t *testing.T) {
 			"rep/backupi_doc1_20250118_083546596.7z.001",
 		}), nomBackup: "doc1", now: date(2025, time.January, 19),
 			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
+		{name: "test7_complet", args: args{repertoire: creerFichiers([]string{"rep/"}), nomBackup: "doc1", now: date(2025, time.January, 19),
+			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
+		{name: "test8_complet", args: args{repertoire: creerFichiers([]string{
+			"rep/backupc_doc1_20250112_083546596.7z.001",
+			"rep/backupi_doc1_20250113_083546596.7z.001",
+			"rep/backupi_doc1_20250114_083546596.7z.001",
+			"rep/backupi_doc1_20250115_083546596.7z.001",
+			"rep/backupi_doc1_20250116_083546596.7z.001",
+			"rep/backupi_doc1_20250117_083546596.7z.001",
+			"rep/backupi_doc1_20250118_083546596.7z.001",
+		}), nomBackup: "doc2", now: date(2025, time.January, 19),
+			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
+		{name: "test9_complet", args: args{repertoire: creerFichiers([]string{
+			"rep/backupi_doc1_20250117_083546596.7z.001",
+			"rep/backupi_doc1_20250118_083546596.7z.001",
+		}), nomBackup: "doc2", now: date(2025, time.January, 19),
+			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1, err := calculCompletFS(tt.args.repertoire, tt.args.nomBackup, tt.args.now, tt.args.debugCompression, tt.args.nbBackupIncremental, "rep")
 			if (err != nil) != tt.wantErr {
-				t.Errorf("calculComplet2() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("calculCompletFS() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("calculComplet2() got = %v, want %v", got, tt.want)
+				t.Errorf("calculCompletFS() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("calculComplet2() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("calculCompletFS() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
