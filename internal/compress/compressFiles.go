@@ -88,22 +88,20 @@ func calculHashFichiers(repCompression string) error {
 	return nil
 }
 
-func trimStringFromString(s string, s2 string) string {
-	if idx := strings.LastIndex(s, s2); idx != -1 {
-		return s[:idx]
-	}
-	return s
+func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
+	repertoire := os.DirFS(repCompression)
+	return calculCompletFS(repertoire, backup.Nom, time.Now(), global.DebugCompression, global.NbBackupIncremental, ".")
 }
 
-func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
-	files, err := os.ReadDir(repCompression)
+func calculCompletFS(repertoire fs.FS, nomBackup string, now time.Time, debugCompression bool, nbBackupIncremental2 int, repCompression string) (bool, time.Time, error) {
+	files, err := fs.ReadDir(repertoire, repCompression)
 	if err != nil {
 		return false, time.Time{}, err
 	}
 	var liste []string
 
-	debutComplet := fmt.Sprintf("backupc_%v_", backup.Nom)
-	debutIncrement := fmt.Sprintf("backupi_%v_", backup.Nom)
+	debutComplet := fmt.Sprintf("backupc_%v_", nomBackup)
+	debutIncrement := fmt.Sprintf("backupi_%v_", nomBackup)
 
 	log.Printf("Parcourt ...")
 	for _, file := range files {
@@ -140,7 +138,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 		}
 	}
 
-	if global.DebugCompression {
+	if debugCompression {
 		log.Printf("trie de la liste %v ...", liste)
 	}
 	slices.SortFunc(liste,
@@ -180,7 +178,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 
 	//sort.Sort(sort.StringSlice(liste))
 
-	if global.DebugCompression {
+	if debugCompression {
 		log.Printf("liste sorted : %v", liste)
 	}
 
@@ -189,10 +187,10 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 	var dateDebutTrouve = false
 	var t1 time.Time
 	var backupComplet bool
-	if global.NbBackupIncremental > 0 {
+	if nbBackupIncremental2 > 0 {
 		for i := len(liste) - 1; i >= 0; i-- {
 			s := liste[i]
-			if global.DebugCompression {
+			if debugCompression {
 				log.Printf("boucle %d : %s", i, s)
 			}
 			if !dateDebutTrouve {
@@ -204,7 +202,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 				}
 				if len(s0) == 18 {
 					s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
-					if global.DebugCompression {
+					if debugCompression {
 						log.Printf("s0 : %s", s0)
 					}
 					tt, err0 := time.Parse("20060102_150405.000", s0)
@@ -216,7 +214,7 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 					}
 				}
 			}
-			if global.DebugCompression {
+			if debugCompression {
 				log.Printf("dateDebutTrouve : %v, dateDebut : %v", dateDebutTrouve, dateDebut)
 			}
 			if strings.HasPrefix(s, "backupc_") {
@@ -224,37 +222,33 @@ func calculComplet(repCompression string, backup config.Backup, global config.Ba
 			} else {
 				nbBackupIncremental++
 			}
-			if global.DebugCompression {
+			if debugCompression {
 				log.Printf("nbBackupIncremental : %d", nbBackupIncremental)
 			}
 		}
 	}
 
 	log.Printf("date: %v (%v), nbBackupIncr: %d, conf nbBackupIncr: %d",
-		dateDebut, dateDebutTrouve, nbBackupIncremental, global.NbBackupIncremental)
+		dateDebut, dateDebutTrouve, nbBackupIncremental, nbBackupIncremental2)
 
-	if global.NbBackupIncremental == 0 || nbBackupIncremental > global.NbBackupIncremental {
+	if nbBackupIncremental2 == 0 || nbBackupIncremental >= nbBackupIncremental2 {
 		backupComplet = true
 	} else {
 		backupComplet = false
 		if dateDebutTrouve {
 			t1 = time.Date(dateDebut.Year(), dateDebut.Month(), dateDebut.Day(), 0, 0, 0, 0, dateDebut.Location())
 		} else {
-			now := time.Now()
+			//now := time.Now()
 			t1 = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 		}
 	}
 
-	if global.DebugCompression {
+	if debugCompression {
 		log.Printf("liste %v", liste)
 	}
 	log.Printf("backup complet: %v date: %v", backupComplet, t1)
 
 	return backupComplet, t1, nil
-}
-
-func trimPrefix(s string, prefix string) string {
-	return strings.TrimPrefix(s, prefix)
 }
 
 func compression(backup config.Backup, global config.BackupGlobal, fileList string, repCompression string, complet bool) ([]string, error) {
