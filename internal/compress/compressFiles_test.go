@@ -214,6 +214,30 @@ func Test_calculCompletFS(t *testing.T) {
 			"rep/backupi_doc1_20250118_083546596.7z.001",
 		}), nomBackup: "doc1", now: date(2025, time.January, 19),
 			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
+		{name: "test14_incremental", args: args{repertoire: creerFichiers([]string{
+			"rep/backupi_doc1_20250115_083546596.7z.001.age",
+			"rep/backupi_doc1_20250115_083546596.7z.001",
+			"rep/backupi_doc1_20250116_083546596.7z.001.age",
+			"rep/backupi_doc1_20250116_083546596.7z.001",
+			"rep/backupi_doc1_20250117_083546596.7z.001.age",
+			"rep/backupi_doc1_20250117_083546596.7z.001",
+			"rep/backupi_doc1_20250118_083546596.7z.001.age",
+			"rep/backupi_doc1_20250118_083546596.7z.001",
+		}), nomBackup: "doc1", now: date(2025, time.January, 19),
+			debugCompression: false, nbBackupIncremental: 5}, want: false, want1: date(2025, time.January, 18), wantErr: false},
+		{name: "test15_complet", args: args{repertoire: creerFichiers([]string{
+			"rep/backupi_doc1_20250114_083546596.7z.001.age",
+			"rep/backupi_doc1_20250114_083546596.7z.001",
+			"rep/backupi_doc1_20250115_083546596.7z.001.age",
+			"rep/backupi_doc1_20250115_083546596.7z.001",
+			"rep/backupi_doc1_20250116_083546596.7z.001.age",
+			"rep/backupi_doc1_20250116_083546596.7z.001",
+			"rep/backupi_doc1_20250117_083546596.7z.001.age",
+			"rep/backupi_doc1_20250117_083546596.7z.001",
+			"rep/backupi_doc1_20250118_083546596.7z.001.age",
+			"rep/backupi_doc1_20250118_083546596.7z.001",
+		}), nomBackup: "doc1", now: date(2025, time.January, 19),
+			debugCompression: false, nbBackupIncremental: 5}, want: true, want1: dateBackupComplet, wantErr: false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
