@@ -7,7 +7,7 @@ import (
 	"gobackup/internal/execution"
 	"gobackup/internal/hashFiles"
 	"gobackup/internal/listFiles"
-	"gobackup/internal/utils"
+	"gobackup/internal/listeFichiers"
 	"io/fs"
 	"log"
 	"os"
@@ -101,7 +101,7 @@ func calculHashFichiers(repCompression string) error {
 }
 
 func calculComplet2(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
-	return utils.Calcul(repCompression, backup, global)
+	return listeFichiers.Calcul(repCompression, backup, global)
 }
 
 func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
