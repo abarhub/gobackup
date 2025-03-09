@@ -1,6 +1,7 @@
 package listeFichiers
 
 import (
+	"fmt"
 	"gobackup/internal/config"
 	"os"
 	"path/filepath"
@@ -381,6 +382,15 @@ func TestListeFichiers_trie(t *testing.T) {
 				time.Date(2025, 1, 16, 8, 35, 46, 596000000, time.UTC),
 				"backupc_doc1_20250116_083546596", []string{"backupc_doc1_20250116_083546596.7z.001.gpg"},
 				true}}},
+		{name: "test5", fields: fields{listeFichiers: []Fichiers{
+			fichier("doc1", true, 2025, 1, 16, 8, 35, 46, 596),
+			fichier("doc1", true, 2023, 1, 10, 8, 35, 46, 596),
+			fichier("doc1", true, 2025, 1, 15, 8, 35, 46, 596),
+		}}, want: []Fichiers{
+			fichier("doc1", true, 2023, 1, 10, 8, 35, 46, 596),
+			fichier("doc1", true, 2025, 1, 15, 8, 35, 46, 596),
+			fichier("doc1", true, 2025, 1, 16, 8, 35, 46, 596),
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -391,6 +401,55 @@ func TestListeFichiers_trie(t *testing.T) {
 			liste.trie()
 			if !reflect.DeepEqual(liste.listeFichiers, tt.want) {
 				t.Errorf("trie() listeFichiers = %v, want %v", liste.listeFichiers, tt.want)
+			}
+		})
+	}
+}
+
+func fichier(nom string, complet bool, annee, mois, jour, heure, minute, seconde, millisecondes int) Fichiers {
+	dateStr := fmt.Sprintf("%04d%02d%02d_%02d%02d%02d.%03d", annee, mois, jour, heure, minute, seconde, millisecondes)
+	var debut string
+	if complet {
+		debut = fmt.Sprintf("backupc")
+	} else {
+		debut = fmt.Sprintf("backupi")
+	}
+	nomBackup := fmt.Sprintf("%s_%s_%04d%02d%02d_%02d%02d%02d%03d", debut, nom, annee, mois, jour, heure, minute, seconde, millisecondes)
+	file := fmt.Sprintf("%s_%s_%04d%02d%02d_%02d%02d%02d%03d.7z.001.gpg", debut, nom, annee, mois, jour, heure, minute, seconde, millisecondes)
+	return Fichiers{dateStr,
+		time.Date(annee, time.Month(mois), jour, heure, minute, seconde, millisecondes*1_000_000, time.UTC),
+		nomBackup, []string{file},
+		complet}
+}
+
+func TestFichier(t *testing.T) {
+	type args struct {
+		nom                                                      string
+		complet                                                  bool
+		annee, mois, jour, heure, minute, seconde, millisecondes int
+	}
+	tests := []struct {
+		name string
+		args args
+		want Fichiers
+	}{
+		// TODO: test cases
+		{name: "test1", args: args{"doc1", true, 2025, 1, 15, 8, 35, 46, 596},
+			want: Fichiers{"20250115_083546.596",
+				time.Date(2025, 1, 15, 8, 35, 46, 596_000_000, time.UTC),
+				"backupc_doc1_20250115_083546596", []string{"backupc_doc1_20250115_083546596.7z.001.gpg"},
+				true}},
+		{name: "test2", args: args{"doc2", false, 2022, 7, 10, 15, 8, 2, 357},
+			want: Fichiers{"20220710_150802.357",
+				time.Date(2022, 7, 10, 15, 8, 2, 357_000_000, time.UTC),
+				"backupi_doc2_20220710_150802357", []string{"backupi_doc2_20220710_150802357.7z.001.gpg"},
+				false}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fichier := fichier(test.args.nom, test.args.complet, test.args.annee, test.args.mois, test.args.jour, test.args.heure, test.args.minute, test.args.seconde, test.args.millisecondes)
+			if !reflect.DeepEqual(fichier, test.want) {
+				t.Errorf("fichier() fichier = %v, want %v", fichier, test.want)
 			}
 		})
 	}
