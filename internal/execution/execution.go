@@ -10,6 +10,10 @@ import (
 )
 
 func Execution(program string, arguments []string) error {
+	return ExecutionIgnoreCode(program, arguments, []int{})
+}
+
+func ExecutionIgnoreCode(program string, arguments []string, ignoreReturnCode []int) error {
 	var exitCode int
 
 	log.Printf("exec : %s %v", program, arguments)
@@ -42,6 +46,14 @@ func Execution(program string, arguments []string) error {
 		if ok {
 			// Récupérer le code de retour du processus
 			exitCode = exitError.ExitCode()
+			if ignoreReturnCode != nil && len(ignoreReturnCode) != 0 {
+				for i := 0; i < len(ignoreReturnCode); i++ {
+					if exitCode == ignoreReturnCode[i] {
+						fmt.Printf("Execution completed with warning : %d", exitCode)
+						err = nil
+					}
+				}
+			}
 		} else {
 			// Autre erreur
 			return fmt.Errorf("erreur lors de l'attente de la commande : %v", err)

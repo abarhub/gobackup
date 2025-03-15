@@ -1,6 +1,7 @@
 package compress
 
 import (
+	"embed"
 	"errors"
 	"fmt"
 	"gobackup/internal/config"
@@ -22,6 +23,9 @@ import (
 type ResultatCompress struct {
 	ListeFichier []string
 }
+
+//go:embed data/archive_vide.7z
+var f embed.FS
 
 func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompress, error) {
 
@@ -47,33 +51,36 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 		}
 	}
 
+	var listeFichierCompresse []string
 	listeFichiers, err := listFiles.ListeFiles(backup, complet, date, global)
 	if err != nil {
 		return ResultatCompress{}, err
 	}
 
 	if listeFichiers.NbFiles == 0 {
-		log.Printf("Aucun fichier à sauvegarder")
-		return ResultatCompress{}, nil
-	} else {
-		log.Printf("%d fichiers à sauvegarder", listeFichiers.NbFiles)
-		listeFichierCompresse, err := compression(backup, global, listeFichiers.ListeFiles, repCompression, complet)
+		log.Printf("Aucun fichier à sauvegarder => création d'un zip vide")
+		listeFichierCompresse, err = compression(backup, global, "", repCompression, complet)
 		if err != nil {
 			return ResultatCompress{}, fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.Nom, listeFichiers.ListeFiles, err)
-		} else {
-			for _, f := range listeFichierCompresse {
-				err = hashFiles.ConstruitHash(f)
-				if err != nil {
-					return ResultatCompress{}, err
-				}
-			}
-			err := calculHashFichiers(repCompression)
-			if err != nil {
-				return ResultatCompress{}, err
-			}
-			return ResultatCompress{listeFichierCompresse}, nil
+		}
+	} else {
+		log.Printf("%d fichiers à sauvegarder", listeFichiers.NbFiles)
+		listeFichierCompresse, err = compression(backup, global, listeFichiers.ListeFiles, repCompression, complet)
+		if err != nil {
+			return ResultatCompress{}, fmt.Errorf("erreur pour compresser le fichier %s (%s) : %v", backup.Nom, listeFichiers.ListeFiles, err)
 		}
 	}
+	for _, f := range listeFichierCompresse {
+		err = hashFiles.ConstruitHash(f)
+		if err != nil {
+			return ResultatCompress{}, err
+		}
+	}
+	err = calculHashFichiers(repCompression)
+	if err != nil {
+		return ResultatCompress{}, err
+	}
+	return ResultatCompress{listeFichierCompresse}, nil
 }
 
 func calculHashFichiers(repCompression string) error {
@@ -281,24 +288,40 @@ func compression(backup config.Backup, global config.BackupGlobal, fileList stri
 		c = "i"
 	}
 	res = fmt.Sprintf("%v/backup%s_%v_%s.7z", repCompression, c, backup.Nom, global.DateHeure)
+	if len(fileList) > 0 {
+		args = []string{"a", "-t7z", "-spf", "-bt", "-v1g", res, "@" + fileList}
 
-	program = global.Rep7zip
-	args = []string{"a", "-t7z", "-spf", "-bt", "-v1g", res, "@" + fileList}
+		program = global.Rep7zip
 
-	log.Printf("compression ...")
+		log.Printf("compression ...")
 
-	err := execution.Execution(program, args)
-	if err != nil {
-		return []string{}, err
+		err := execution.Execution(program, args)
+		if err != nil {
+			return []string{}, err
+		}
+
+		log.Printf("compression terminé")
+	} else {
+		//args = []string{"a", "-t7z", "-spf", "-bt", "-v1g", "-an", res}
+		data, err := f.ReadFile("data/archive_vide.7z")
+		if err != nil {
+			return []string{}, err
+		}
+		err = os.WriteFile(res, data, 0644)
+		if err != nil {
+			return []string{}, err
+		}
 	}
 
-	log.Printf("compression terminé")
+	return listeFichiersCompresse(res, repCompression)
+}
 
+func listeFichiersCompresse(res string, repCompression string) ([]string, error) {
 	name := path.Base(res)
 
 	var listeFichiers []string
 
-	err = filepath.WalkDir(repCompression, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(repCompression, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
