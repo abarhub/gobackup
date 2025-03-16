@@ -1,4 +1,4 @@
-package listFiles
+package listeFichiersASauver
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type ListeFichiers struct {
+type ListeFichiersASauver struct {
 	ListeFiles string
 	NbFiles    int
 }
@@ -23,7 +23,7 @@ const (
 	IgnoreFichier
 )
 
-func ListeFiles(backup config.Backup, complet bool, date time.Time, global config.BackupGlobal) (ListeFichiers, error) {
+func ParcourtListeFichiersASauver(backup config.Backup, complet bool, date time.Time, global config.BackupGlobal) (ListeFichiersASauver, error) {
 
 	log.Printf("ecriture de la liste des fichiers dans  %s (complet=%v) ...\n", backup.FileListe, complet)
 
@@ -31,14 +31,14 @@ func ListeFiles(backup config.Backup, complet bool, date time.Time, global confi
 
 	nbFichiers, err := parcourt(backup, complet, date, global)
 	if err != nil {
-		return ListeFichiers{}, err
+		return ListeFichiersASauver{}, err
 	}
 
 	elapsed := time.Since(start)
 
 	log.Printf("parcourt %s", elapsed)
 
-	return ListeFichiers{backup.FileListe, nbFichiers}, nil
+	return ListeFichiersASauver{backup.FileListe, nbFichiers}, nil
 }
 
 func parcourt(res config.Backup, complet bool, date time.Time, configGlobal config.BackupGlobal) (int, error) {

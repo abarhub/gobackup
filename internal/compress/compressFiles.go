@@ -7,8 +7,8 @@ import (
 	"gobackup/internal/config"
 	"gobackup/internal/execution"
 	"gobackup/internal/hashFiles"
-	"gobackup/internal/listFiles"
 	"gobackup/internal/listeFichiers"
+	"gobackup/internal/listeFichiersASauver"
 	"io/fs"
 	"log"
 	"os"
@@ -43,7 +43,7 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 	}
 
 	var listeFichierCompresse []string
-	listeFichiers, err := listFiles.ListeFiles(backup, complet, date, global)
+	listeFichiers, err := listeFichiersASauver.ParcourtListeFichiersASauver(backup, complet, date, global)
 	if err != nil {
 		return ResultatCompress{}, err
 	}

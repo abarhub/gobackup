@@ -1,4 +1,4 @@
-package listFiles
+package listeFichiersASauver
 
 import (
 	"bufio"
@@ -27,58 +27,58 @@ func TestListeFiles(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    ListeFichiers
+		want    ListeFichiersASauver
 		want2   []string
 		wantErr bool
 	}{
 		{name: "test1", args: args{backup: config.Backup{Nom: "test1", FileListe: t.TempDir() + "/listeFichier.txt", Rep: []string{"rep"}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 1}, want2: []string{"rep/fichier1.txt"}},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 1}, want2: []string{"rep/fichier1.txt"}},
 		{name: "test2", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt", Rep: []string{"rep2"}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 6},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 6},
 			want2: []string{"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv", "rep2/test1/fichier01.txt",
 				"rep2/test1/fichier02.txt", "rep2/test1/fichier03.doc"}},
 		{name: "test3", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt", Rep: []string{"rep", "rep2"}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 7},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 7},
 			want2: []string{"rep/fichier1.txt", "rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv", "rep2/test1/fichier01.txt",
 				"rep2/test1/fichier02.txt", "rep2/test1/fichier03.doc"}},
 		{name: "test4", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt", Rep: []string{"rep2"},
 			Exclusion: config.ExclusionType{Set: map[string]bool{"test1": true}}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 3},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 3},
 			want2: []string{"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv"}},
 		{name: "test5", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
 			Rep: []string{"rep2"}, Exclusion: config.ExclusionType{Map2: map[string][][]string{"test1": {{"rep2", "test1"}}}}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 3},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 3},
 			want2: []string{"rep2/fichier1.txt", "rep2/fichier2.csv", "rep2/fichier3.csv"}},
 		{name: "test6", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
 			Rep: []string{"rep3"}, Exclusion: config.ExclusionType{Map2: map[string][][]string{"test04": {{"rep3", "test03", "test04"}}}}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 4},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 4},
 			want2: []string{"rep3/fichier1.txt", "rep3/test01/fichier2.txt", "rep3/test01/test02/fichier3.txt", "rep3/test03/fichier4.txt"}},
 		{name: "test7", args: args{backup: config.Backup{Nom: "test2", FileListe: t.TempDir() + "/listeFichier.txt",
 			Rep: []string{"rep4"}, Exclusion: config.ExclusionType{Map2: map[string][][]string{"test02": {{"rep4", "test03", "test02"}}}}},
-			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiers{NbFiles: 4},
+			complet: true, global: config.BackupGlobal{}, repTemp: t.TempDir()}, want: ListeFichiersASauver{NbFiles: 4},
 			want2: []string{"rep4/fichier1.txt", "rep4/test01/fichier2.txt", "rep4/test01/test02/fichier3.txt", "rep4/test03/fichier4.txt"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err2 := initialiseRepertoire(t, tt.args.backup, tt.args, &tt.want)
 			if err2 != nil {
-				t.Errorf("ListeFiles() erreur pour initialiser les fichiers = %v", err2)
+				t.Errorf("ParcourtListeFichiersASauver() erreur pour initialiser les fichiers = %v", err2)
 				return
 			}
-			got, err := ListeFiles(tt.args.backup, tt.args.complet, tt.args.date, tt.args.global)
+			got, err := ParcourtListeFichiersASauver(tt.args.backup, tt.args.complet, tt.args.date, tt.args.global)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ListeFiles() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParcourtListeFichiersASauver() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ListeFiles() got = %v, want %v", got, tt.want)
+				t.Errorf("ParcourtListeFichiersASauver() got = %v, want %v", got, tt.want)
 			}
 			resultat, err := lectureFichier(tt.want.ListeFiles, tt.args.repTemp)
 			if err != nil {
-				t.Errorf("ListeFiles() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ParcourtListeFichiersASauver() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !reflect.DeepEqual(resultat, tt.want2) {
-				t.Errorf("ListeFiles() got = %v, want %v", resultat, tt.want2)
+				t.Errorf("ParcourtListeFichiersASauver() got = %v, want %v", resultat, tt.want2)
 			}
 		})
 	}
@@ -122,7 +122,7 @@ func lectureFichier(files string, tempDir string) ([]string, error) {
 	return lignes, nil
 }
 
-func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wants *ListeFichiers) error {
+func initialiseRepertoire(t *testing.T, backup config.Backup, arguments args, wants *ListeFichiersASauver) error {
 	repertoireTemporaire := arguments.repTemp
 	liste := []string{
 		// rep
