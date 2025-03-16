@@ -40,11 +40,9 @@ func (liste *ListeFichiers) ajouteRepertoire(repertoire string) error {
 	if err != nil {
 		return err
 	}
-	//var liste2 []Fichiers
 
 	log.Printf("Parcourt ...")
 	for _, file := range files {
-		//log.Printf("file: %v", file.Name())
 		if !file.IsDir() {
 			err := liste.ajouteFichier(file.Name())
 			if err != nil {
@@ -53,7 +51,6 @@ func (liste *ListeFichiers) ajouteRepertoire(repertoire string) error {
 		}
 	}
 
-	//liste.listeFichiers = liste2
 	return nil
 }
 
@@ -63,28 +60,21 @@ func (liste *ListeFichiers) ajouteFichier(nomFichier string) error {
 	if strings.HasPrefix(nomFichier, debutComplet) || strings.HasPrefix(nomFichier, debutIncrement) {
 		s := nomFichier
 		complet := strings.HasPrefix(nomFichier, debutComplet)
-		//log.Printf("s001: %v", s)
 		for _, extCrypt := range []string{".gpg", ".age"} {
 			if strings.HasSuffix(s, extCrypt) {
 				s = strings.TrimSuffix(s, extCrypt)
 			}
 		}
-		//log.Printf("s002: %v", s)
 		if strings.HasSuffix(s, hashFiles.GetExtension()) {
 			s = strings.TrimSuffix(s, hashFiles.GetExtension())
 		}
-		//log.Printf("s003: %v", s)
 		var re = regexp.MustCompile(`\.[0-9]+$`)
 		s = re.ReplaceAllString(s, ``)
-		//log.Printf("s004: %v", s)
 		if strings.HasSuffix(s, ".7z") {
 			s = strings.TrimSuffix(s, ".7z")
 		}
-		//log.Printf("s: %v", s)
 		re2 := regexp.MustCompile("^(" + debutComplet + ")|(" + debutIncrement + `)[0-9]+_[0-9]+$`)
 		if re2.MatchString(s) {
-			//log.Printf("match: %v", s)
-			//s = trimStringFromString(s, "_")
 			s2 := s
 			if strings.HasPrefix(s2, debutComplet) {
 				s2 = strings.TrimPrefix(s2, debutComplet)
@@ -92,10 +82,6 @@ func (liste *ListeFichiers) ajouteFichier(nomFichier string) error {
 			if strings.HasPrefix(s2, debutIncrement) {
 				s2 = strings.TrimPrefix(s2, debutIncrement)
 			}
-			//pos := strings.IndexRune(s2, '_')
-			//if pos > -1 {
-			//	s2 = s2[:pos]
-			//}
 			s2 = s2[0:len(s2)-3] + "." + s2[len(s2)-3:]
 
 			dateDebutTrouve := false
@@ -117,8 +103,7 @@ func (liste *ListeFichiers) ajouteFichier(nomFichier string) error {
 						break
 					}
 				}
-				if !trouve { //!slices.Contains(liste2, s) {
-					//log.Printf("append: %v", s)
+				if !trouve {
 					file2 := Fichiers{DateStr: s2,
 						liste:   []string{nomFichier},
 						complet: complet,
@@ -159,32 +144,13 @@ func (liste *ListeFichiers) calculComplet(nbBackupIncremental2 int, now time.Tim
 				log.Printf("boucle %d : %v", i, s)
 			}
 			if !dateDebutTrouve {
-				//var s0 string
-				//if strings.HasPrefix(s, debutComplet) {
-				//	s0 = strings.TrimPrefix(s, debutComplet)
-				//} else if strings.HasPrefix(s, debutIncrement) {
-				//	s0 = strings.TrimPrefix(s, debutIncrement)
-				//}
-				//if len(s0) == 18 {
-				//	s0 = s0[0:len(s0)-3] + "." + s0[len(s0)-3:]
-				//	if debugCompression {
-				//		log.Printf("s0 : %s", s0)
-				//	}
-				//	tt, err0 := time.Parse("20060102_150405.000", s0)
-				//	if err0 != nil {
-				//		// erreur de parsing => on ignore le fichier
-				//	} else {
-				//		dateDebutTrouve = true
-				//		dateDebut = tt
-				//	}
-				//}
 				dateDebutTrouve = true
 				dateDebut = s.date
 			}
 			if debugCompression {
 				log.Printf("dateDebutTrouve : %v, dateDebut : %v", dateDebutTrouve, dateDebut)
 			}
-			if s.complet { //strings.HasPrefix(s, "backupc_") {
+			if s.complet {
 				break
 			} else {
 				nbBackupIncremental++
@@ -205,7 +171,6 @@ func (liste *ListeFichiers) calculComplet(nbBackupIncremental2 int, now time.Tim
 		if dateDebutTrouve {
 			t1 = time.Date(dateDebut.Year(), dateDebut.Month(), dateDebut.Day(), 0, 0, 0, 0, dateDebut.Location())
 		} else {
-			//now := time.Now()
 			t1 = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 		}
 	}

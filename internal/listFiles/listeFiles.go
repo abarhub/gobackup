@@ -74,23 +74,6 @@ func parcourt(res config.Backup, complet bool, date time.Time, configGlobal conf
 				return filepath.SkipDir
 			}
 
-			//fileName := filepath.Base(path)
-			//
-			//_, ok := res.Exclusion.Set[fileName]
-			//if ok {
-			//	fmt.Printf("Répertoire ignoré: %q\n", path)
-			//	return filepath.SkipDir
-			//}
-			//
-			//_, ok2 := res.Exclusion.Map2[fileName]
-			//if ok2 {
-			//	tab := strings.Split(path, "\\")
-			//	if testEqSuffixSlice(res.Exclusion.Map2[fileName], tab) {
-			//		fmt.Printf("Répertoire ignoré: %q\n", path)
-			//		return filepath.SkipDir
-			//	}
-			//}
-
 			if !info.IsDir() {
 
 				traitement := false
