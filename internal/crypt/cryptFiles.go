@@ -32,7 +32,8 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 
 	for _, file := range fileCompressed.ListeFichier {
 		filename := filepath.Base(file)
-		if !strings.HasSuffix(filename, extension) && !strings.HasSuffix(filename, extension2) && !strings.HasSuffix(filename, hashFiles.GetExtension()) {
+		if !strings.HasSuffix(filename, extension) && !strings.HasSuffix(filename, extension2) &&
+			!strings.HasSuffix(filename, hashFiles.GetExtension()) {
 			f := file
 			var f2 = ""
 			if global.TypeCryptage == config.CryptGpg {
@@ -42,7 +43,7 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 			}
 
 			if _, err := os.Stat(f2); errors.Is(err, os.ErrNotExist) {
-				// cryptate du fichier f2
+				// cryptage du fichier f2
 				_, err := cryptFile(f, f2, global)
 				if err != nil {
 					return fmt.Errorf("erreur pour crypter le fichier %s : %w", f, err)
@@ -62,7 +63,7 @@ func Crypt(fileCompressed compress.ResultatCompress, b config.Backup, global con
 
 	err = cryptFichiersNonCryptes(global, repCrypt, b)
 	if err != nil {
-		return fmt.Errorf("erreur pour crypter les fichiers non crypte : %w", err)
+		return fmt.Errorf("erreur pour crypter les fichiers non cryptes : %w", err)
 	}
 
 	err = hashFichiersNonHashes(repCrypt)
