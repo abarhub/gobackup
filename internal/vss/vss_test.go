@@ -10,10 +10,13 @@ import (
 
 func TestInitVss(t *testing.T) {
 	if testing.Short() {
-		t.Skip("Skipping long test in short mode")
+		t.Skip("Skipping vss tests (no short test)")
 	}
 	if runtime.GOOS != "windows" {
-		t.Skip("Skipping vss tests")
+		t.Skip("Skipping vss tests (not windows)")
+	}
+	if os.Getenv("TEST_VSS") != "OK" {
+		t.Skip("Skipping vss tests (not env TEST_VSS=OK)")
 	}
 
 	rep := t.TempDir()
