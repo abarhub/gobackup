@@ -36,8 +36,8 @@ func Compress(backup config.Backup, global config.BackupGlobal) (ResultatCompres
 	var complet bool
 	var date time.Time
 
-	log.Printf("calcul complet2")
-	complet, date, err = calculComplet2(repCompression, backup, global)
+	log.Printf("calcul complet")
+	complet, date, err = calculComplet(repCompression, backup, global)
 	if err != nil {
 		return ResultatCompress{}, err
 	}
@@ -98,7 +98,7 @@ func calculHashFichiers(repCompression string) error {
 	return nil
 }
 
-func calculComplet2(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
+func calculComplet(repCompression string, backup config.Backup, global config.BackupGlobal) (bool, time.Time, error) {
 	return listeFichiers.Calcul(repCompression, backup, global)
 }
 

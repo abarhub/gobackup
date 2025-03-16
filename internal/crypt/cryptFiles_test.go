@@ -12,28 +12,6 @@ import (
 	"testing"
 )
 
-func TestCrypt(t *testing.T) {
-	type args struct {
-		fileCompressed compress.ResultatCompress
-		b              config.Backup
-		global         config.BackupGlobal
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := Crypt(tt.args.fileCompressed, tt.args.b, tt.args.global); (err != nil) != tt.wantErr {
-				t.Errorf("Crypt() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestCrypt2(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping vss tests (no short test)")
