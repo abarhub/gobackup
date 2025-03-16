@@ -41,9 +41,9 @@ func TestCrypt2(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("Skipping vss tests (not windows)")
 	}
-	//if os.Getenv("TEST_CRYPT") != "OK" {
-	//	t.Skip("Skipping vss tests (not env TEST_CRYPT=OK)")
-	//}
+	if os.Getenv("TEST_CRYPT") != "OK" {
+		t.Skip("Skipping vss tests (not env TEST_CRYPT=OK)")
+	}
 	repertoireAge := os.Getenv("TEST_CRYPT_AGE_REPERTOIRE")
 	recipientAge := os.Getenv("TEST_CRYPT_AGE_RECIPIENT")
 	if repertoireAge == "" {
