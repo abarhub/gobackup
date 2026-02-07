@@ -32,6 +32,7 @@ func main() {
 	}
 
 	go noSleep.PasSleep()
+	defer noSleep.FinNoSleep()
 
 	configGlobal, err = config.InitialisationConfig(configFile)
 	if err != nil {
