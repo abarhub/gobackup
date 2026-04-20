@@ -31,6 +31,8 @@ var listeFichiers4 = []string{
 	"rep/backupi_doc1_20250117_083546596.7z.001",
 	"rep/backupi_doc1_20250118_083546596.7z.001"}
 
+var listeFichiers5 = []string{}
+
 func TestCalcul(t *testing.T) {
 	type args struct {
 		fichiers   []string
@@ -55,6 +57,7 @@ func TestCalcul(t *testing.T) {
 		{name: "test10", args: args{fichiers: listeFichiers4, nbIncement: 2}, want: true},
 		{name: "test11", args: args{fichiers: listeFichiers4, nbIncement: 3}, want: true},
 		{name: "test12", args: args{fichiers: listeFichiers4, nbIncement: 4}, want: false, want1: time.Date(2025, 1, 18, 0, 0, 0, 0, time.UTC)},
+		{name: "test13", args: args{fichiers: listeFichiers5, nbIncement: 3}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -81,6 +84,10 @@ func TestCalcul(t *testing.T) {
 				NbBackupIncremental: tt.args.nbIncement,
 			}
 			rep := filepath.Join(tmpDir, "rep")
+			err := os.MkdirAll(rep, 0777)
+			if err != nil {
+				t.Fatal(err)
+			}
 			got, got1, err := Calcul(rep, backup, global)
 			if err != nil {
 				t.Errorf("Calcul() error = %v, wantErr %v", err, false)

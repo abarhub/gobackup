@@ -164,7 +164,7 @@ func (liste *ListeFichiers) calculComplet(nbBackupIncremental2 int, now time.Tim
 	log.Printf("date: %v (%v), nbBackupIncr: %d, conf nbBackupIncr: %d",
 		dateDebut, dateDebutTrouve, nbBackupIncremental, nbBackupIncremental2)
 
-	if nbBackupIncremental2 == 0 || nbBackupIncremental >= nbBackupIncremental2 {
+	if nbBackupIncremental2 == 0 || nbBackupIncremental >= nbBackupIncremental2 || len(liste.listeFichiers) == 0 {
 		backupComplet = true
 	} else {
 		backupComplet = false
